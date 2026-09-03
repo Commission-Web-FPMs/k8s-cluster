@@ -11,3 +11,7 @@ Il a pour vocation de contenir :
 3. Une configuration déclarative et versionnée décrivant l’état désiré du cluster.
 
 4. Des outils permettant d’assurer les opérations courantes de maintenance.
+
+## Documentation
+
+1. [Topologie du cluster](./docs/topologie.md)
