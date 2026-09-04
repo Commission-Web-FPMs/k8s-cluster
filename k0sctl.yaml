@@ -1,0 +1,91 @@
+apiVersion: k0sctl.k0sproject.io/v1beta1
+kind: Cluster
+metadata:
+  name: comweb-k8s-dev
+  user: admin
+spec:
+  hosts:
+  - ssh:
+      # VM0
+      address: 172.17.0.100
+      # For authentification, use ssh-agent,
+      # with ssh-add /path/to/private/key
+      # then login-in with ssh -A user@172.17.0.100 
+      # to apply k0sctl apply --config path/to/k0sctl.yaml
+      user: magellan
+      port: 22
+
+    noTaints: true
+    privateAddress: 172.17.0.100
+    role: controller+worker
+  - ssh:
+      # VM1
+      address: 172.17.0.101
+      user: magellan
+      port: 22
+
+    noTaints: true
+    privateAddress: 172.17.0.101
+    role: controller+worker
+  - ssh:
+      # VM2
+      address: 172.17.0.102
+      user: magellan
+      port: 22
+
+    noTaints: true
+    privateAddress: 172.17.0.102
+    role: controller+worker
+  k0s:
+    version: v1.36.4+k0s.0
+  options:
+    wait:
+      enabled: true
+    drain:
+      enabled: true
+      gracePeriod: 2m0s
+      timeout: 5m0s
+      force: true
+      ignoreDaemonSets: true
+      deleteEmptyDirData: true
+      podSelector: ""
+      skipWaitForDeleteTimeout: 0s
+    concurrency:
+      limit: 30
+      workerDisruptionPercent: 10
+      uploads: 5
+    evictTaint:
+      enabled: false
+      taint: k0sctl.k0sproject.io/evict=true
+      effect: NoExecute
+      controllerWorkers: false
+---
+apiVersion: k0s.k0sproject.io/v1beta1
+kind: ClusterConfig
+metadata:
+  name: k0s
+spec:
+  api:
+    ca:
+      expiresAfter: 1752000h
+      certificatesExpireAfter: 1752000h
+
+  network:
+    provider: kuberouter
+
+    podCIDR: 10.244.0.0/16
+    serviceCIDR: 10.96.0.0/12
+
+    nodeLocalLoadBalancing:
+      enabled: true
+      type: EnvoyProxy
+
+  storage:
+    type: etcd
+    etcd:
+      ca:
+        expiresAfter: 1752000h
+        certificatesExpireAfter: 1752000h
+
+  telemetry:
+    enabled: false
