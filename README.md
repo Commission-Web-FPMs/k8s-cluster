@@ -19,7 +19,7 @@ Il a pour vocation de contenir :
 
 ## Bootstrapping
 
-Pour boostrapper (hors-node)
+Pour boostrapper k8s (à faire une fois pour setup le cluster, ou le réparer):
 
 ```sh
 # 1. Installer k0sctl
