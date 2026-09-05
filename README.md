@@ -16,6 +16,8 @@ Il a pour vocation de contenir :
 
 1. [Topologie du cluster](./docs/topologie.md)
 2. [Réseau](./docs/reseau.md)
+3. [Sécurité et cloisonnement](./docs/securite.md)
+4. [Améliorations prévues](./docs/backlog.md)
 
 ## Bootstrapping
 
