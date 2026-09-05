@@ -351,9 +351,12 @@ de mot de passe partagé.
 
 ## Couche 6 : secrets
 
-Aucun mécanisme n'existe aujourd'hui, et le composant S3 en dépend déjà : son
-Secret d'identifiants est créé à la main, hors du dépôt. Un cluster reconstruit
-à partir de ce dépôt n'a donc pas de stockage.
+Cette section expose le raisonnement. Pour l'usage quotidien — installer
+`kubeseal`, sceller un secret, le committer — voir [secrets.md](./secrets.md).
+
+Le composant S3 dépend déjà d'un secret : ses identifiants sont créés à la main,
+hors du dépôt. Un cluster reconstruit à partir de ce dépôt n'a donc pas de
+stockage.
 
 ### Ce que le GitOps impose
 
@@ -438,25 +441,57 @@ Le pari ne tient que si ces trois points sont respectés.
 
 - **Sauvegarder la clé de scellement hors du cluster.** Ce n'est pas
   indispensable au sens strict, puisque tout est réémissible, mais cela
-  transforme une reconstruction en restauration.
+  transforme une reconstruction en restauration. Le renouvellement automatique
+  de la clé est désactivé précisément pour que cette sauvegarde se fasse une
+  fois et reste valable (voir plus bas).
 
-Deux détails de fonctionnement, à connaître avant de s'y mettre. Un secret est
-scellé pour un cluster donné, et par défaut pour un namespace et un nom donnés :
-le déplacer suppose de le rescellé. Et le contrôleur renouvelle sa clé
-périodiquement tout en conservant les anciennes, donc les secrets déjà scellés
-continuent de fonctionner.
+### Ce qui est installé
 
-L'installation suit le même patron que MetalLB : le contrôleur et sa définition
-de ressource doivent exister avant le premier secret scellé. En revanche, un Pod
-qui attend un secret pas encore déchiffré ne fait pas échouer la
-synchronisation, il patiente puis démarre. Il n'y a donc pas d'ordonnancement à
-écrire pour chaque consommateur.
+Le contrôleur est déployé par `manifests/sealed-secrets/`, sur le même patron
+que MetalLB : une Application qui ne porte que le chart. Elle est en **vague
+-1**, de sorte que le contrôleur et sa définition de ressource existent avant
+tout le reste.
+
+La validation à blanc d'ArgoCD ayant lieu avant la première vague, un
+SealedSecret committé dans ce dépôt doit malgré tout porter l'annotation
+`SkipDryRunOnMissingResource=true`, sans quoi une reconstruction depuis zéro
+échoue sur un type qui n'existe pas encore. En revanche, rien à écrire du côté
+des Pods qui consomment le Secret produit : un Pod dont le Secret manque encore
+patiente puis démarre, sans faire échouer la synchronisation.
+
+Deux réglages méritent d'être connus.
+
+Le chart nomme ses ressources d'après la release, alors que `kubeseal` cherche
+par défaut un contrôleur nommé `sealed-secrets-controller`. Le nom est donc
+aligné sur ce que la ligne de commande attend, et seul le namespace reste à
+préciser au scellement. La marche à suivre, l'installation de `kubeseal` et un
+exemple complet sont dans [secrets.md](./secrets.md).
+
+Le renouvellement automatique de la clé est **désactivé**. Par défaut le
+contrôleur en génère une nouvelle tous les 30 jours en conservant les
+anciennes ; les secrets déjà scellés continuent alors de fonctionner, mais une
+sauvegarde cesse de couvrir ce qui sera scellé ensuite. Elle périme en silence,
+et cela se découvre au moment de restaurer. Le renouvellement n'apporte par
+ailleurs presque rien ici, puisque toutes les clés vivent dans le même
+namespace : qui obtient l'une obtient les autres. Avec une clé unique, la
+sauvegarde se fait une fois, et faire tourner la clé redevient un geste
+délibéré, à poser le jour où on la soupçonne compromise — le contrôleur en
+génère alors une nouvelle sur réception du signal `SIGUSR1`, sans perdre
+l'ancienne. Le contrôleur ne crée une clé que s'il n'en trouve aucune : un
+redémarrage ne remet donc pas la sauvegarde en cause.
 
 ### Une remarque de cloisonnement
 
 Les Secrets d'ArgoCD, qui contiennent les identifiants d'accès aux dépôts,
 vivent dans le namespace `argocd`. Le confinement des projets étudiants à leur
 propre namespace est ce qui les met hors de portée.
+
+Le contrôleur Sealed Secrets ajoute une cible du même ordre. Il détient un rôle
+de cluster qui lui donne la main sur les Secrets de tous les namespaces, et sa
+clé privée vit dans le namespace `sealed-secrets`. Deux conséquences pour les
+couches précédentes : ce namespace doit rester hors d'atteinte des projets
+étudiants, et le `clusterResourceBlacklist` du projet étudiant est ce qui
+empêche un manifeste de se rattacher au compte de service du contrôleur.
 
 ## Pour aller plus loin
 

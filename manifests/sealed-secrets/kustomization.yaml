@@ -25,18 +25,9 @@ kind: Kustomization
 #
 # 2. Scellement. Un SealedSecret est chiffré pour ce cluster, et par défaut
 #    pour un namespace et un nom précis ; le déplacer suppose de le resceller.
-#    Le contrôleur étant dans son propre namespace, kubeseal a besoin de le
-#    savoir :
-#
-#      kubectl create secret generic mon-secret \
-#        --namespace mon-namespace \
-#        --from-literal=cle=valeur \
-#        --dry-run=client -o yaml \
-#      | kubeseal --controller-namespace sealed-secrets --format yaml \
-#      > mon-secret.sealed.yaml
-#
-#    Seul le fichier scellé est committé. Le Secret en clair ne doit jamais
-#    toucher le disque ni le dépôt.
+#    L'installation de kubeseal et la marche à suivre sont dans
+#    docs/secrets.md. Seul le fichier scellé est committé : le Secret en clair
+#    ne doit jamais toucher le disque ni le dépôt.
 
 resources:
   - application.yaml
