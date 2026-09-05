@@ -61,7 +61,7 @@ Prenons un exemple :
     - Addresse IP: `172.17.0.101/24`
 
 #### VM2
-- Hyperviseur : Hyperviseur2
+- Hyperviseur : Hyperviseur3
 - Hostname : k8s-dev-vm2
 - Interface réseau : enp6s18
     - Addresse MAC: `bc:24:11:43:b4:4c`
