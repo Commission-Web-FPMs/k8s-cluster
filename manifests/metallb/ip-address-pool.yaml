@@ -1,0 +1,16 @@
+# Déclare les plages d'adresses IP que MetalLB peut utiliser
+# pour attribuer des IP fixes aux services de type LoadBalancer.
+# Ces IPs sont virtuelles et flottantes, elles ne sont pas attribuées à une interface réseau particulière physique.
+# Mais sont gérées à tout de rôle par des noeuds du cluster Kubernetes. 
+
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: default
+  namespace: metallb-system
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  addresses:
+    # Plage réservée pour le cluster
+    - 172.17.0.110-172.17.0.119
