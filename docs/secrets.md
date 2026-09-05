@@ -265,8 +265,9 @@ Cette séparation n'est pas cosmétique : `kubeseal` réécrit intégralement le
 fichier scellé à chaque rescellement et n'y conserve aucun commentaire. Une
 documentation placée dans le YAML disparaîtrait au premier usage.
 
-Partez de [modeles/secret.md](./modeles/secret.md), puis ajoutez la ligne
-correspondante dans [secrets-inventaire.md](./secrets-inventaire.md).
+Exemple : [s3-credentials.md](../manifests/csi-s3/s3-credentials.md). Ajoutez
+ensuite la ligne correspondante dans
+[secrets-inventaire.md](./secrets-inventaire.md).
 
 Rien à écrire en revanche du côté des Pods qui attendent le `Secret` produit :
 un Pod dont le secret manque encore patiente puis démarre. Il n'y a pas
