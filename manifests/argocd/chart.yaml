@@ -1,0 +1,38 @@
+apiVersion: helm.k0sproject.io/v1beta1
+kind: Chart
+metadata:
+  name: argocd
+  namespace: kube-system
+spec:
+  chartName: argo/argo-cd
+  releaseName: argocd
+  version:  10.8.0
+  namespace: argocd
+
+  repository:
+    url: https://argoproj.github.io/argo-helm
+
+  # Self-managed ArgoCD which install argocd chart and other apps
+  values: |
+    extraObjects:
+      - apiVersion: argoproj.io/v1alpha1
+        kind: Application
+        metadata:
+          name: root
+          namespace: argocd
+        spec:
+          project: default
+
+          source:
+            repoURL: https://github.com/Commission-Web-FPMs/k8s-cluster.git
+            targetRevision: main
+            path: manifests
+
+          destination:
+            server: https://kubernetes.default.svc
+            namespace: default
+
+          syncPolicy:
+            automated:
+              prune: true
+              selfHeal: true
