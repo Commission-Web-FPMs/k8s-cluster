@@ -19,6 +19,13 @@ Il a pour vocation de contenir :
 
 ## Bootstrapping
 
+Le bootstrapping initial s'effectue en deux parties:
+
+1. Bootstrapper le cluster
+2. Bootstrapper ArgoCD et l'application initiale, pointant vers ce repo github (`manifests/`)
+ 
+### 1. Partie cluster
+
 Pour boostrapper k8s (à faire une fois pour setup le cluster, ou le réparer):
 
 ```sh
@@ -60,7 +67,19 @@ k0s kubectl # Si sur le noeud
 kubectl # sinon (à installer)
 
 # Si sur bastion
-ssh -L 6443:172.17.0.100:6443 magellan@bastion # (valable sur une autre IP d'un des autres noeud aussi)
+ssh -N -L 6443:172.17.0.100:6443 magellan@bastion # (valable sur une autre IP d'un des autres noeud aussi)
 vim ~/.kube/config # modifer la config -> 172.17.0.100:6443 ->  127.0.0.1:6443
 kubectl # Utiliser!
+```
+
+### 2. Partie ArgoCD
+
+ArgoCD s'ocucpe de maintenir et synchroniser les manifests présents dans ce repo github à jour dans le cluster.
+
+L'installation s'effectue via un HelmChart géré par k0s. Une fois celui-ci installé, il configure argoCD, puis ajoute une application pointant vers `https://github.com/Commission-Web-FPMs/k8s-cluster.git` dossier `manifests/`.
+
+```sh
+# Appliquer le manifest
+# Remarque: il faut changer l'url github dans le fichier avant si le repo est forké
+kubectl apply -f manifests/argocd/chart.yaml
 ```
