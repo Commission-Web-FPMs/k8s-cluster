@@ -13,6 +13,11 @@ spec:
   repository:
     url: https://argoproj.github.io/argo-helm
 
+  # ne pas utiliser `helm upgrade --force`.
+  # Sinon les Secrets générés/modifiés au runtime par ArgoCD
+  # peuvent être supprimés puis recréés.
+  forceUpgrade: false
+
   # Ici le repo Github est installé en tant qu'application
   # Puisque ce chart.yaml est déjà dans le dossier manifests/
   # Il sera lui même géré par ArgoCD, par la suite
@@ -43,6 +48,6 @@ spec:
             automated:
               prune: true
               selfHeal: true
-              
+
             syncOptions:
               - ServerSideApply=true
