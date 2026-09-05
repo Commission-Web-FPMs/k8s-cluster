@@ -57,11 +57,6 @@ spec:
           # outils S3, qui ne suivent pas tous la même convention.
           mountOptions: "-o compat_dir"
 
-        # Les identifiants S3 ne sont pas gérés par ce dépôt : le chart
-        # attend un Secret déjà présent dans le cluster, créé à la main.
-        # C'est le seul élément de ce composant qui échappe au GitOps, et
-        # donc à reprendre le jour où le dépôt se dote d'une gestion de
-        # secrets chiffrés.
         secret:
           create: false
           name: csi-s3-secret

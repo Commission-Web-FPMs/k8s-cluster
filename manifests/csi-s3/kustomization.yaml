@@ -3,10 +3,38 @@ kind: Kustomization
 
 # Stockage S3, vu par l'application racine.
 #
-# Ce composant ne comporte pour l'instant que l'Application qui installe
-# le chart. Le kustomization existe malgré tout pour que la racine
-# référence un dossier, comme pour les autres composants, et pour
-# accueillir la configuration éventuelle sans avoir à toucher à la racine.
+# Ce composant comporte l'Application qui installe le chart, et le secret
+# scellé qui porte les identifiants du fournisseur S3.
+# Sa fiche est dans s3-credentials.md.
 
 resources:
   - application.yaml
+  - s3-credentials.sealed.yaml
+
+# ArgoCD valide toutes les ressources à blanc avant d'entamer la première
+# vague de synchronisation. Sur un cluster reconstruit depuis zéro, le type
+# SealedSecret n'existe pas encore à ce moment-là, et la validation échouerait.
+# L'annotation lui dit de ne pas valider ce qu'il ne connaît pas encore.
+#
+# Elle est posée ici plutôt que dans le fichier scellé, parce que celui-ci est
+# un artefact : kubeseal le réécrit intégralement à chaque rescellement et une
+# annotation ajoutée à la main y serait perdue au premier usage.
+#
+# Contrairement au patch de MetalLB, celui-ci est un patch de fusion et non une
+# opération JSON : il ajoute une clé sans réécrire la table d'annotations. Les
+# annotations que kubeseal aurait posées lui-même, comme celle de portée avec
+# --scope, sont donc conservées.
+patches:
+  - target:
+      group: bitnami.com
+      kind: SealedSecret
+    patch: |
+      apiVersion: bitnami.com/v1alpha1
+      kind: SealedSecret
+      metadata:
+        # Ignoré : c'est le sélecteur `target` ci-dessus qui désigne les
+        # ressources visées. Ce champ n'est là que pour que le patch soit un
+        # document YAML valide.
+        name: ignore
+        annotations:
+          argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
