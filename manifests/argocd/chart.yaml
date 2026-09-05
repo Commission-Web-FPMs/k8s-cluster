@@ -6,13 +6,17 @@ metadata:
 spec:
   chartName: argo/argo-cd
   releaseName: argocd
+  # Version fixée de argocd, peut-être mis à jour si nécessaire
   version:  10.8.0
   namespace: argocd
 
   repository:
     url: https://argoproj.github.io/argo-helm
 
-  # Self-managed ArgoCD which install argocd chart and other apps
+  # Ici le repo Github est installé en tant qu'application
+  # Puisque ce chart.yaml est déjà dans le dossier manifests/
+  # Il sera lui même géré par ArgoCD, par la suite
+  # On obtient donc un "self-managed" ArgoCD, qui se met à jour lui-même
   values: |
     extraObjects:
       - apiVersion: argoproj.io/v1alpha1
@@ -24,9 +28,12 @@ spec:
           project: default
 
           source:
+            # Cette URL doit être modifiée si le repo est fork
             repoURL: https://github.com/Commission-Web-FPMs/k8s-cluster.git
             targetRevision: main
             path: manifests
+            directory:
+              recurse: true
 
           destination:
             server: https://kubernetes.default.svc
@@ -36,3 +43,6 @@ spec:
             automated:
               prune: true
               selfHeal: true
+              
+            syncOptions:
+              - ServerSideApply=true
