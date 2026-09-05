@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Stockage S3, vu par l'application racine.
+#
+# Ce composant ne comporte pour l'instant que l'Application qui installe
+# le chart. Le kustomization existe malgré tout pour que la racine
+# référence un dossier, comme pour les autres composants, et pour
+# accueillir la configuration éventuelle sans avoir à toucher à la racine.
+
+resources:
+  - application.yaml

@@ -1,0 +1,78 @@
+# Installe le pilote CSI S3 dans le cluster Kubernetes.
+#
+# Ce pilote permet de monter des buckets S3 comme des volumes persistants
+# ordinaires. Un PersistentVolumeClaim demandant la classe de stockage
+# déclarée plus bas se voit attribuer un bucket, monté dans le Pod comme
+# un système de fichiers.
+#
+# Solution temporaire : elle a vocation à être remplacée par un accès
+# au NAS du cercle.
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: csi-s3
+  namespace: argocd
+
+  # Ce finalizer fait que la suppression de cette Application entraîne
+  # aussi la suppression de tout ce qu'elle a déployé, classe de stockage
+  # et volumes compris.
+  # Attention : l'application racine ayant `prune: true`, retirer ce
+  # composant de son kustomization suffit à déclencher cette cascade.
+  # Les données des buckets survivent grâce à `reclaimPolicy: Retain`,
+  # mais les PersistentVolumes qui pointaient dessus, non.
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    repoURL: https://yandex-cloud.github.io/k8s-csi-s3/charts
+    chart: csi-s3
+    targetRevision: 0.43.7
+
+    helm:
+      values: |
+        # k0s ne place pas le kubelet à l'emplacement par défaut supposé
+        # par le chart. Sans cette valeur, le pilote ne trouve pas le
+        # répertoire des plugins et n'est jamais enregistré.
+        kubeletPath: /var/lib/k0s/kubelet
+
+        # L'UMons bloque cr.yandex (pas le DNS) mais tous les paquets vers des
+        # IP de l'AS yandex cloud sont drop par le routeur de sortie.
+        # Les images sont donc tirées depuis des registres joignables.
+        images:
+          registrar: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.16.0
+          provisioner: registry.k8s.io/sig-storage/csi-provisioner:v6.2.0
+          csi: docker.io/dyrnq/csi-s3-driver:0.43.7
+
+        storageClass:
+          create: true
+          name: s3
+          mounter: s3fs
+          # Retain : la suppression d'un PersistentVolumeClaim ne détruit
+          # pas le bucket ni son contenu. Le nettoyage reste manuel.
+          reclaimPolicy: Retain
+          # compat_dir : s3fs reconnaît les répertoires créés par d'autres
+          # outils S3, qui ne suivent pas tous la même convention.
+          mountOptions: "-o compat_dir"
+
+        # Les identifiants S3 ne sont pas gérés par ce dépôt : le chart
+        # attend un Secret déjà présent dans le cluster, créé à la main.
+        # C'est le seul élément de ce composant qui échappe au GitOps, et
+        # donc à reprendre le jour où le dépôt se dote d'une gestion de
+        # secrets chiffrés.
+        secret:
+          create: false
+          name: csi-s3-secret
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: csi-s3
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
