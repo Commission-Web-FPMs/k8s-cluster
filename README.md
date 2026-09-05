@@ -83,3 +83,19 @@ L'installation s'effectue via un HelmChart géré par k0s. Une fois celui-ci ins
 # Remarque: il faut changer l'url github dans le fichier avant si le repo est forké
 kubectl apply -f manifests/argocd/chart.yaml
 ```
+
+
+Comment accéder à ArgoCD? (admin)
+```sh
+# Récupérer le mdp admin
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
+
+# Forward le port 
+kubectl -n argocd port-forward svc/argocd-server 8443:443
+
+# ArgoCD est disponible localement (tant que le port-forward est actif)
+# Sur https://localhost:8443
+# Username: admin
+# Password: (voir commande plus haut)
+# NB: accepter le certificat "non trust" HTTPs
+```
