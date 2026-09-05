@@ -10,10 +10,16 @@ metadata:
 spec:
   project: default
 
-  source:
-    repoURL: https://metallb.github.io/metallb
-    chart: metallb
-    targetRevision: 0.16.1
+  sources:
+    # Installe MetalLB depuis le repo officiel.
+    - repoURL: https://metallb.github.io/metallb
+      chart: metallb
+      targetRevision: 0.16.1
+    - repoURL: https://github.com/Commission-Web-FPMs/k8s-cluster.git
+      targetRevision: main
+      path: manifests/metallb
+      directory:
+        include: 'config-application.yaml'
 
   destination:
     server: https://kubernetes.default.svc
