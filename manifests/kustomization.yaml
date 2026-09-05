@@ -3,5 +3,6 @@ kind: Kustomization
 
 resources:
   - argocd/chart.yaml
-  
-  - metallb/application.yaml
+
+  # MetalLB : attribue des IP de type LoadBalancer aux services
+  - metallb/

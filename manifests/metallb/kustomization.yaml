@@ -1,0 +1,42 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# MetalLB, vu par l'application racine : l'Application qui installe le chart,
+# et la configuration qui en dépend.
+#
+# Les deux sont appliquées par la racine, donc aucun fichier de ce dossier
+# n'a besoin de redéclarer l'URL du dépôt.
+
+resources:
+  - application.yaml
+
+  - config/ip-address-pool.yaml
+  - config/l2-advertisement.yaml
+
+# Les ressources de configuration reposent sur des CRDs installées par le chart
+# MetalLB, donc absentes lors de la première synchronisation. Les deux
+# annotations ci-dessous règlent les deux moitiés du problème :
+#
+#   sync-wave        : applique la configuration après l'Application MetalLB,
+#                      une fois le chart déployé et les CRDs présentes.
+#   SkipDryRunOnMissingResource : ArgoCD valide toutes les ressources à blanc
+#                      avant d'entamer la première vague. Sans cette option, la
+#                      validation échouerait sur des CRDs qui n'existent pas
+#                      encore, et la synchronisation n'irait jamais jusqu'à la
+#                      vague qui les crée.
+#
+# Le patch ne vise que le groupe metallb.io, pour ne pas annoter l'Application
+# elle-même, qui doit rester en vague 0.
+#
+# Attention : ce patch écrit la table d'annotations entière. Si l'une de ces
+# ressources devait porter ses propres annotations, il faudrait passer à une
+# opération par clé.
+patches:
+  - target:
+      group: metallb.io
+    patch: |
+      - op: add
+        path: /metadata/annotations
+        value:
+          argocd.argoproj.io/sync-wave: "1"
+          argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
