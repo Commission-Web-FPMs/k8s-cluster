@@ -1,0 +1,42 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Sealed Secrets, vu par l'application racine.
+#
+# Ce composant ne contient que l'Application qui installe le chart. Les
+# SealedSecrets, eux, ne vivent pas ici : chacun appartient au composant qui
+# le consomme, à côté de l'Application qui en a besoin.
+#
+# Deux choses à savoir avant d'ajouter le premier SealedSecret ailleurs dans
+# ce dépôt.
+#
+# 1. Ordonnancement. L'Application ci-contre est en vague -1, donc le
+#    contrôleur et sa CRD existent avant les vagues suivantes. Mais ArgoCD
+#    valide à blanc toutes les ressources avant d'entamer la première vague :
+#    lors d'une reconstruction depuis zéro, cette validation échoue sur un type
+#    SealedSecret qui n'existe pas encore. Les SealedSecrets doivent donc porter
+#    l'annotation, comme la configuration MetalLB :
+#
+#      argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+#
+#    Rien à écrire en revanche du côté des Pods qui consomment le Secret
+#    produit : un Pod dont le Secret manque encore patiente puis démarre, sans
+#    faire échouer la synchronisation.
+#
+# 2. Scellement. Un SealedSecret est chiffré pour ce cluster, et par défaut
+#    pour un namespace et un nom précis ; le déplacer suppose de le resceller.
+#    Le contrôleur étant dans son propre namespace, kubeseal a besoin de le
+#    savoir :
+#
+#      kubectl create secret generic mon-secret \
+#        --namespace mon-namespace \
+#        --from-literal=cle=valeur \
+#        --dry-run=client -o yaml \
+#      | kubeseal --controller-namespace sealed-secrets --format yaml \
+#      > mon-secret.sealed.yaml
+#
+#    Seul le fichier scellé est committé. Le Secret en clair ne doit jamais
+#    toucher le disque ni le dépôt.
+
+resources:
+  - application.yaml

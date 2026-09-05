@@ -1,0 +1,73 @@
+# Installe le contrôleur Sealed Secrets dans le cluster Kubernetes.
+#
+# Il permet de committer des secrets dans ce dépôt sous forme chiffrée. On
+# scelle un Secret avec la clé publique du contrôleur, on committe le
+# SealedSecret obtenu, et le contrôleur le déchiffre dans le cluster pour en
+# produire le Secret réel.
+#
+# Le raisonnement qui a conduit à ce choix plutôt qu'à SOPS ou External Secrets
+# est dans docs/securite.md, couche 6.
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: sealed-secrets
+  namespace: argocd
+
+  annotations:
+    # Vague négative : le contrôleur et sa CRD doivent exister avant tout
+    # SealedSecret déployé par ce dépôt. Tout le reste étant en vague 0, cette
+    # Application est appliquée et attendue en bonne santé avant eux.
+    argocd.argoproj.io/sync-wave: "-1"
+
+  # Pas de finalizer ici, contrairement au composant S3, et c'est délibéré.
+  # Supprimer cette Application supprimerait la CRD, donc tous les SealedSecrets
+  # du cluster, et le contrôleur pose une ownerReference sur les Secrets qu'il
+  # produit : la cascade irait jusqu'aux secrets réellement utilisés par les
+  # applications. Sans finalizer, le retrait laisse ces objets en place.
+spec:
+  project: default
+
+  source:
+    # Le projet a déménagé de bitnami-labs vers bitnami. L'ancienne URL de dépôt
+    # Helm (bitnami-labs.github.io) ne répond plus.
+    repoURL: https://bitnami.github.io/sealed-secrets
+    chart: sealed-secrets
+    targetRevision: 2.19.3
+
+    helm:
+      values: |
+        # Le chart nomme ses ressources d'après le nom de la release, ici
+        # « sealed-secrets », alors que la ligne de commande kubeseal cherche
+        # par défaut un contrôleur nommé « sealed-secrets-controller ». Aligner
+        # le nom évite d'avoir à passer --controller-name à chaque scellement.
+        fullnameOverride: sealed-secrets-controller
+
+        # Renouvellement automatique de la clé de scellement désactivé
+        # (« 0 », les guillemets sont obligatoires).
+        #
+        # Par défaut le contrôleur génère une nouvelle clé tous les 30 jours en
+        # conservant les anciennes. Les secrets déjà scellés continuent de
+        # fonctionner, mais une sauvegarde de la clé cesse de couvrir ce qui
+        # sera scellé ensuite : elle périme en silence, et on ne le découvre
+        # qu'au moment de restaurer.
+        #
+        # Le renouvellement n'apporte par ailleurs presque rien ici, puisque
+        # toutes les clés, anciennes comprises, restent dans le même namespace :
+        # qui obtient l'une obtient les autres.
+        #
+        # Avec une clé unique, la sauvegarde demandée par docs/backlog.md se
+        # fait une fois et reste valable. Faire tourner la clé redevient un
+        # geste délibéré, à poser le jour où on la soupçonne compromise.
+        keyrenewperiod: "0"
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: sealed-secrets
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
