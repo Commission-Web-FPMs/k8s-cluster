@@ -6,7 +6,7 @@
 apiVersion: metallb.io/v1beta1
 kind: IPAddressPool
 metadata:
-  name: default
+  name: lan-ip-pool
   namespace: metallb-system
 spec:
   addresses:
