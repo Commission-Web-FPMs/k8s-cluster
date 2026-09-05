@@ -39,7 +39,7 @@ AppProjects ──> namespaces durcis ──> accueil des projets étudiants
       désactivé, pour qu'une sauvegarde faite une fois reste valable. Reste à
       synchroniser puis à vérifier que le premier scellement fonctionne.
 
-- [ ] **Sauvegarder la clé de scellement hors du cluster**, et tester la
+- [x] **Sauvegarder la clé de scellement hors du cluster**, et tester la
       restauration. Sans elle, une reconstruction du cluster oblige à réémettre
       tous les identifiants chez leurs fournisseurs. Le renouvellement étant
       désactivé, il n'y a qu'une clé, donc une sauvegarde à faire une seule
@@ -48,14 +48,19 @@ AppProjects ──> namespaces durcis ──> accueil des projets étudiants
       Deux points à ne pas rater : le fichier contient la clé privée et ne va
       pas dans ce dépôt, et il doit être connu d'au moins deux personnes.
 
-- [ ] **Tenir l'inventaire des secrets scellés** : à quel service chacun donne
-      accès, et qui peut en émettre un nouveau. Aucune valeur n'y figure, donc
-      il vit dans ce dépôt. C'est ce qui rend une rotation d'urgence mécanique
-      plutôt que devinatoire.
+- [ ] **Tenir l'inventaire des secrets scellés.** Le patron est en place :
+      chaque secret scellé est accompagné d'une fiche voisine, partant de
+      [modeles/secret.md](./modeles/secret.md), et
+      [secrets-inventaire.md](./secrets-inventaire.md) n'en contient que la
+      liste et les liens. Aucune valeur n'y figure, tout vit donc dans ce dépôt.
+      C'est ce qui rend une rotation d'urgence mécanique plutôt que devinatoire.
 
-- [ ] **Réduire la portée de chaque identifiant** : une clé S3 par bucket, un
-      compte NAS limité à un partage. Une fuite se répare alors service par
-      service.
+- [ ] **Compléter la fiche S3.** La section « Obtenir de nouveaux identifiants »
+      de [s3-credentials.md](../manifests/csi-s3/s3-credentials.md) est vide :
+      il faut le chemin réel dans l'interface du fournisseur, écran par écran,
+      et le même détail pour la révocation. C'est la seule partie qu'aucune
+      documentation générique ne remplace, et elle se perd d'une année sur
+      l'autre.
 
 - [ ] **Faire entrer le Secret S3 dans le dépôt.** Aujourd'hui les identifiants
       du stockage sont créés à la main. Un cluster reconstruit depuis ce dépôt

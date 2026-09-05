@@ -73,9 +73,11 @@ Kubernetes normal que les applications consomment.
 
 Deux propriétés en découlent, qu'il vaut mieux connaître avant de s'en servir.
 
-Le chiffrement est **asymétrique**. Sceller ne demande donc aucun droit sur le
-cluster : la clé publique ne permet pas de déchiffrer. N'importe qui peut
-préparer un secret, seul le cluster peut le lire.
+Le chiffrement est **asymétrique**. Sceller ne demande donc **aucun droit sur
+les Secrets** : la clé publique ne permet pas de déchiffrer. Il faut seulement
+pouvoir joindre le contrôleur pour lui demander cette clé publique, ce qui
+suppose un accès authentifié au cluster — ou, une fois la clé exportée, plus
+aucun accès du tout (voir « Sceller sans accès au cluster » plus bas).
 
 Un `SealedSecret` est scellé **pour ce cluster, et pour un namespace et un nom
 précis**. C'est ce qui empêche quelqu'un de recopier un secret chiffré dans un
@@ -213,26 +215,58 @@ automatique est désactivé, voir [securite.md](./securite.md).
 Le fichier scellé vit **à côté du composant qui le consomme**, pas dans
 `manifests/sealed-secrets/`, qui ne contient que le contrôleur.
 
-Deux choses à faire.
+Trois choses à faire.
 
-**Ajouter l'annotation.** ArgoCD valide toutes les ressources à blanc avant la
-première vague de synchronisation. Sur un cluster reconstruit depuis zéro, le
-type `SealedSecret` n'existe pas encore à ce moment-là, et la validation échoue.
-L'annotation lui dit de ne pas valider ce qu'il ne connaît pas encore :
-
-```yaml
-metadata:
-  annotations:
-    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
-```
-
-**Le déclarer dans le kustomization du composant :**
+**Le déclarer dans le kustomization du composant, avec son patch d'annotation.**
+Le fichier scellé étant un artefact que `kubeseal` réécrit intégralement à
+chaque rescellement, on n'y touche pas à la main : l'annotation est posée par le
+`kustomization.yaml`, une fois pour toutes.
 
 ```yaml
 resources:
   - application.yaml
   - mon-secret.sealed.yaml
+
+patches:
+  - target:
+      group: bitnami.com
+      kind: SealedSecret
+    patch: |
+      apiVersion: bitnami.com/v1alpha1
+      kind: SealedSecret
+      metadata:
+        name: ignore      # le sélecteur `target` ci-dessus fait le travail
+        annotations:
+          argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 ```
+
+À quoi sert cette annotation : ArgoCD valide toutes les ressources à blanc avant
+d'entamer la première vague de synchronisation. Sur un cluster reconstruit
+depuis zéro, le type `SealedSecret` n'existe pas encore à ce moment-là, et la
+validation échouerait. L'annotation lui dit de ne pas valider ce qu'il ne
+connaît pas encore.
+
+Le patch vise le groupe `bitnami.com`, donc il couvre tous les secrets scellés
+du composant, présents et futurs, sans que l'Application voisine soit touchée.
+C'est un patch de fusion et non une opération JSON : il ajoute une clé sans
+réécrire la table d'annotations, et préserve donc celles que `kubeseal` aurait
+posées lui-même, par exemple avec `--scope`.
+
+**Écrire sa fiche.** À côté du fichier scellé, un `mon-secret.md` qui dit à quel
+service ce secret donne accès, qui peut en émettre un nouveau, et surtout
+**comment** — le chemin réel dans l'interface du fournisseur, écran par écran.
+
+```text
+manifests/mon-composant/mon-secret.sealed.yaml   <- généré, jamais édité
+manifests/mon-composant/mon-secret.md            <- la fiche
+```
+
+Cette séparation n'est pas cosmétique : `kubeseal` réécrit intégralement le
+fichier scellé à chaque rescellement et n'y conserve aucun commentaire. Une
+documentation placée dans le YAML disparaîtrait au premier usage.
+
+Partez de [modeles/secret.md](./modeles/secret.md), puis ajoutez la ligne
+correspondante dans [secrets-inventaire.md](./secrets-inventaire.md).
 
 Rien à écrire en revanche du côté des Pods qui attendent le `Secret` produit :
 un Pod dont le secret manque encore patiente puis démarre. Il n'y a pas
@@ -258,6 +292,10 @@ un autre nom que celui sous lequel il est déposé.
 ## Exemple concret : les identifiants S3
 
 C'est le premier cas réel, encore à faire (voir [backlog.md](./backlog.md)).
+Sa fiche complète — d'où viennent ces identifiants, comment les vérifier,
+comment révoquer les anciens — est dans
+[s3-credentials.md](../manifests/csi-s3/s3-credentials.md).
+
 Le composant `csi-s3` attend aujourd'hui un `Secret` nommé `csi-s3-secret` dans
 le namespace `csi-s3`, créé à la main, avec quatre clés :
 
@@ -266,11 +304,11 @@ kubectl create secret generic csi-s3-secret \
   --namespace csi-s3 \
   --from-literal=accessKeyID='...' \
   --from-literal=secretAccessKey='...' \
-  --from-literal=endpoint='https://...' \
+  --from-literal=endpoint='https://s3dupauvre.6700067.xyz' \
   --from-literal=region='' \
   --dry-run=client -o yaml \
 | kubeseal --controller-namespace sealed-secrets --format yaml \
-> manifests/csi-s3/secret.sealed.yaml
+> manifests/csi-s3/s3-credentials.sealed.yaml
 ```
 
 Il reste ensuite à ajouter l'annotation, à déclarer le fichier dans

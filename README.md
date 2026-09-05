@@ -18,6 +18,7 @@ Il a pour vocation de contenir :
 2. [Réseau](./docs/reseau.md)
 3. [Sécurité et cloisonnement](./docs/securite.md)
 4. [Gestion des secrets](./docs/secrets.md)
+   - [Inventaire des secrets](./docs/secrets-inventaire.md)
 5. [Améliorations prévues](./docs/backlog.md)
 
 ## Bootstrapping

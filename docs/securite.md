@@ -455,7 +455,9 @@ tout le reste.
 La validation à blanc d'ArgoCD ayant lieu avant la première vague, un
 SealedSecret committé dans ce dépôt doit malgré tout porter l'annotation
 `SkipDryRunOnMissingResource=true`, sans quoi une reconstruction depuis zéro
-échoue sur un type qui n'existe pas encore. En revanche, rien à écrire du côté
+échoue sur un type qui n'existe pas encore. Elle est posée par le
+`kustomization.yaml` du composant, et non dans le fichier scellé que `kubeseal`
+réécrit à chaque rotation. En revanche, rien à écrire du côté
 des Pods qui consomment le Secret produit : un Pod dont le Secret manque encore
 patiente puis démarre, sans faire échouer la synchronisation.
 
