@@ -21,7 +21,8 @@ spec:
           # donc on restreint au repo voulu.
           - repositoryMatch: '^site-fede-deployment$'
 
-        requeueAfterSeconds: 60
+        requeueAfterSeconds: 180 # Augmentation des délais pour éviter les
+        # rate limits github le temps qu'on utilise un vrai token d'app pour github.
 
   template:
     metadata:
