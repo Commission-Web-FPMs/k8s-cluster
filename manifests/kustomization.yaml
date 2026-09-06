@@ -20,4 +20,6 @@ resources:
   # servent appartiennent aux composants qui les consomment.
   - local-path-provisioner/
 
- 
+  # CloudNativePG : opérateur PostgreSQL, et le cluster à trois instances
+  # qu'il pilote.
+  - cnpg/

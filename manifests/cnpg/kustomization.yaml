@@ -1,0 +1,26 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# CloudNativePG, vu par l'application racine.
+#
+# Ce composant comporte l'Application qui installe l'opérateur, le namespace du
+# cluster PostgreSQL, la classe de stockage de ses volumes, et le cluster
+# lui-même.
+#
+# Contrairement à MetalLB, les annotations de vague et d'options de
+# synchronisation ne sont pas posées par un patch mais écrites directement dans
+# cluster/comweb-db.yaml. Ce fichier est le nôtre, pas un artefact régénéré comme
+# un SealedSecret : les y écrire les rend lisibles à côté de ce qu'elles
+# protègent, et un patch aurait effacé les commentaires qui les expliquent.
+#
+# Ordre attendu :
+#   vague 0  l'Application de l'opérateur, le namespace, la classe de stockage
+#   vague 1  le Cluster, une fois la CRD présente
+#
+# Dépendance externe : la classe de stockage suppose que le provisioner de
+# manifests/local-path-provisioner/ tourne, et que la racine
+# /var/lib/postgresql figure dans son `nodePathMap`.
+
+resources:
+  - application.yaml
+  - storage-class.yaml

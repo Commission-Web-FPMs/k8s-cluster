@@ -1,0 +1,68 @@
+# Classe de stockage des volumes PostgreSQL.
+#
+# Elle vit ici, à côté du cluster qui la consomme, et non dans
+# manifests/local-path-provisioner/ : le provisioner est un mécanisme partagé,
+# cette classe est un choix propre à PostgreSQL. Le seul lien entre les deux est
+# la racine `/var/lib/postgresql`, qui doit rester déclarée dans le `nodePathMap`
+# du provisioner — sans quoi le provisionnement échoue.
+
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: postgres-local
+
+  annotations:
+    # `local` plutôt que `hostPath`, qui est la valeur par défaut du provisioner.
+    # C'est le type de volume qui permet à kubelet d'appliquer le `fsGroup` du
+    # Pod au répertoire. Sans lui, PostgreSQL, qui tourne sous l'UID 26, ne
+    # pourrait pas écrire dans le volume qu'on vient de lui donner.
+    defaultVolumeType: "local"
+
+# Ce nom doit correspondre à l'argument `--provisioner-name` du provisioner,
+# forcé dans les valeurs de manifests/local-path-provisioner/application.yaml.
+provisioner: rancher.io/local-path
+
+parameters:
+  # Épingle la racine. Sans ce paramètre, le provisioner choisirait au hasard
+  # parmi les racines déclarées dans son `nodePathMap`, et les données de
+  # PostgreSQL pourraient atterrir n'importe où.
+  nodePath: /var/lib/postgresql
+
+  # Chemin final : <nodePath>/<namespace>/<nom du PVC>, soit par exemple
+  # /var/lib/postgresql/comweb-db/comweb-db-1
+  #
+  # Le provisioner impose que ce motif commence par le namespace et le nom du
+  # PVC, ce qui interdit de le réduire au seul nom du cluster. La contrepartie
+  # est plutôt bonne : le numéro d'instance apparaît dans le chemin, donc un
+  # répertoire trouvé sur un nœud est identifiable sans interroger le cluster.
+  #
+  # Sans ce motif, les répertoires porteraient l'identifiant du volume
+  # (pvc-<uuid>_<namespace>_<nom>), illisible sur le disque d'un nœud.
+  pathPattern: "{{ .PVC.Namespace }}/{{ .PVC.Name }}/"
+
+# Indispensable : le volume n'est créé qu'une fois le Pod planifié. Avec
+# `Immediate`, le volume serait créé sur un nœud choisi au hasard et le Pod
+# devrait ensuite le suivre, ce qui annulerait la règle d'anti-affinité du
+# cluster PostgreSQL.
+volumeBindingMode: WaitForFirstConsumer
+
+# Delete, et non Retain comme sur le stockage S3.
+#
+# C'est contre-intuitif pour une base de données, mais c'est la procédure de
+# réparation qui l'impose : quand un nœud est perdu définitivement, on supprime
+# le PersistentVolumeClaim de l'instance concernée pour que CloudNativePG la
+# reconstruise ailleurs (voir le commentaire d'anti-affinité dans
+# cluster/comweb-db.yaml). Avec Retain, chaque réparation laisserait derrière
+# elle un répertoire de plusieurs Go que personne ne nettoierait, sur des nœuds
+# dont le disque est déjà le point sensible.
+#
+# Ce que Retain aurait protégé — une suppression accidentelle — est traité en
+# amont, par l'annotation `Prune=false` posée sur la ressource Cluster. Et la
+# vraie sauvegarde n'est ni l'un ni l'autre : voir le TODO de
+# cluster/comweb-db.yaml.
+reclaimPolicy: Delete
+
+# Le provisioner sait agrandir un volume, mais n'applique aucun quota : la
+# taille demandée reste déclarative, et la seule limite réelle est celle du
+# système de fichiers du nœud.
+allowVolumeExpansion: true
