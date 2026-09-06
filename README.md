@@ -74,50 +74,35 @@ kubectl # sinon (à installer)
 ssh -N -L 6443:172.17.0.100:6443 magellan@bastion # (valable sur une autre IP d'un des autres noeud aussi)
 vim ~/.kube/config # modifer la config -> 172.17.0.100:6443 ->  127.0.0.1:6443
 kubectl # Utiliser!
+
+# Pour proxy: 
+
+# linux
+sed -i '/cluster:/a\    proxy-url: socks5://127.0.0.1:1080' ~/.kube/config
+
+# macos
+sed -i '' '/cluster:/a\
+    proxy-url: socks5://127.0.0.1:1080' ~/.kube/config
+
+# Puis
+ssh -N -D 1080 magellan@bastion
 ```
 
 ### 2. Partie ArgoCD
 
 ArgoCD s'occupe de maintenir et synchroniser les manifests présents dans ce repo github à jour dans le cluster.
 
-
 ```sh
-# 1. Le namespace
-kubectl create namespace argocd
+# 1. Installation d'amorçage. (installer helm?!)
+helm repo add argo https://argoproj.github.io/argo-helm && helm repo update argo
 
-# 2. Installation d'amorçage. Jetable : elle sert uniquement à faire exister
-#    un ArgoCD capable de lire ce dépôt.
-kubectl apply -n argocd --server-side --force-conflicts \
-  -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.2/manifests/install.yaml
+# 2. Installer ArgoCD (temporaire)
+helm template argocd argo/argo-cd --version 10.8.0 -n argocd \
+| kubectl apply -n argocd --server-side --force-conflicts \
+    --field-manager=argocd-controller -f -
 
-# 3. Installer le repo Github.
+# 3. Installer le repo Github. À partir d'ici, plus rien à la main.
 kubectl apply -f manifests/argocd/application.yaml
-```
-
-
-#### Retirer les restes de l'amorçage
-
-Attendre que tout soit correctement installé : 
-
-```sh
-kubectl -n argocd delete --ignore-not-found \
-  serviceaccount/argocd-redis \
-  role/argocd-redis \
-  rolebinding/argocd-redis \
-  service/argocd-metrics \
-  service/argocd-server-metrics \
-  service/argocd-notifications-controller-metrics \
-  networkpolicy/argocd-application-controller-network-policy \
-  networkpolicy/argocd-applicationset-controller-network-policy \
-  networkpolicy/argocd-dex-server-network-policy \
-  networkpolicy/argocd-notifications-controller-network-policy \
-  networkpolicy/argocd-redis-network-policy \
-  networkpolicy/argocd-repo-server-network-policy \
-  networkpolicy/argocd-server-network-policy
-
-kubectl delete --ignore-not-found \
-  clusterrole/argocd-applicationset-controller \
-  clusterrolebinding/argocd-applicationset-controller
 ```
 
 Comment accéder à ArgoCD? -> Utiliser son compte Github
