@@ -17,6 +17,7 @@ patches:
         path: /metadata/annotations
         value:
           argocd.argoproj.io/sync-wave: "1"
+          argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 
   - target:
       group: gateway.networking.k8s.io
@@ -26,3 +27,4 @@ patches:
         path: /metadata/annotations
         value:
           argocd.argoproj.io/sync-wave: "2"
+          argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
