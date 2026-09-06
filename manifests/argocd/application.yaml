@@ -40,6 +40,9 @@ spec:
             # Personne ne consulte ArgoCD sans s'authentifier.
             "users.anonymous.enabled": "false"
 
+            # Limite la durée des sessions émises par ArgoCD.
+            "users.session.duration": "8h"
+
             # Interdit l'ouverture d'un terminal dans un Pod depuis
             # l'interface. Sans cela, un accès en lecture à l'interface
             # devient un accès shell à n'importe quel conteneur du cluster.
@@ -56,6 +59,9 @@ spec:
             url: "https://localhost:8443"
 
             "dex.config": |
+              expiry:
+                idTokens: "8h"
+
               connectors:
                 - type: github
                   id: github
