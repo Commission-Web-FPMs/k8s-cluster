@@ -92,9 +92,14 @@ AppProjects ──> namespaces durcis ──> accueil des projets étudiants
       *Suppose d'avoir d'abord déplacé le projet `platform` dans les valeurs du
       chart et d'y avoir rattaché l'Application racine.*
 
-- [ ] **Poser `Prune=false` sur la ressource Chart d'ArgoCD.** En l'état, un
-      renommage ou un déplacement de ce fichier conduit ArgoCD à supprimer sa
-      propre installation, et il faut tout réamorcer à la main.
+- [ ] **Poser `Prune=false` sur l'Application `argocd`.** Un renommage ou un
+      déplacement de `manifests/argocd/application.yaml` conduit l'application
+      racine à supprimer l'Application qui gère ArgoCD. Depuis l'abandon de la
+      ressource `Chart` de k0s, cela ne détruit plus l'installation — une
+      Application sans finaliseur `resources-finalizer.argocd.argoproj.io`
+      laisse ses ressources en place — mais ArgoCD cesse alors d'être géré par
+      ce dépôt, et rien ne le signale : la configuration continue de tourner,
+      simplement plus personne ne la réconcilie.
 
 - [ ] **Empêcher l'auto-montage des jetons de compte de service** dans les
       namespaces de projets, pour qu'un Pod compromis ne dispose pas d'emblée

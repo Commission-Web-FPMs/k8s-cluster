@@ -523,8 +523,8 @@ n'ont pas le même cycle de vie. Il y a trois niveaux.
 ### Niveau 1 : l'amorçage
 
 Certaines choses doivent exister avant qu'ArgoCD ne synchronise quoi que ce
-soit. Elles vivent donc dans `manifests/argocd/chart.yaml`, dans les valeurs du
-chart, aux côtés de l'Application racine.
+soit. Elles vivent donc dans `manifests/argocd/application.yaml`, dans les valeurs
+du chart, aux côtés de l'Application racine.
 
 C'est le cas de la configuration d'ArgoCD lui-même, qui n'est pas une ressource
 séparée mais des valeurs du chart : la politique RBAC, la désactivation du

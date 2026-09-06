@@ -3,18 +3,14 @@ kind: Kustomization
 
 # ArgoCD lui-même, vu par l'application racine.
 #
-# Ce composant comporte la ressource Chart qui installe ArgoCD — et qui, ce
-# dossier étant synchronisé par ArgoCD, le rend auto-géré — ainsi que le secret
-# scellé de la connexion par GitHub, le jour où celle-ci sera activée.
+# Ce composant comporte l'Application qui installe ArgoCD — et qui, ce dossier
+# étant synchronisé par ArgoCD, le rend auto-géré — ainsi que le secret scellé
+# de la connexion par GitHub.
 # Sa fiche est dans github-oauth.md.
 
 resources:
-  - chart.yaml
+  - application.yaml
 
-  # Identifiants de l'application OAuth GitHub. Le Secret déchiffré est déjà
-  # produit dans le cluster ; il reste inerte tant que le connecteur Dex de
-  # chart.yaml est commenté, ce qui attend l'exposition durable d'ArgoCD.
-  # Sa fiche : github-oauth.md.
   - github-oauth.sealed.yaml
 
 # ArgoCD valide toutes les ressources à blanc avant d'entamer la première

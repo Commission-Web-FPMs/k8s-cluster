@@ -4,7 +4,7 @@ secret:       argocd-github-oauth
 namespace:    argocd
 portee:       lecture de l'appartenance aux équipes de l'organisation (read:org)
 reemission:   Propriétaire de l'organisation GitHub
-consomme_par: manifests/argocd/chart.yaml (configs.cm.dex.config)
+consomme_par: manifests/argocd/application.yaml (configs.cm.dex.config)
 ---
 
 # Connexion à ArgoCD par GitHub

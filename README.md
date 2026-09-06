@@ -78,28 +78,52 @@ kubectl # Utiliser!
 
 ### 2. Partie ArgoCD
 
-ArgoCD s'ocucpe de maintenir et synchroniser les manifests présents dans ce repo github à jour dans le cluster.
+ArgoCD s'occupe de maintenir et synchroniser les manifests présents dans ce repo github à jour dans le cluster.
 
-L'installation s'effectue via un HelmChart géré par k0s. Une fois celui-ci installé, il configure argoCD, puis ajoute une application pointant vers `https://github.com/Commission-Web-FPMs/k8s-cluster.git` dossier `manifests/`.
 
 ```sh
-# Appliquer le manifest
-# Remarque: il faut changer l'url github dans le fichier avant si le repo est forké
-kubectl apply -f manifests/argocd/chart.yaml
+# 1. Le namespace
+kubectl create namespace argocd
+
+# 2. Installation d'amorçage. Jetable : elle sert uniquement à faire exister
+#    un ArgoCD capable de lire ce dépôt.
+kubectl apply -n argocd --server-side --force-conflicts \
+  -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.2/manifests/install.yaml
+
+# 3. Installer le repo Github.
+kubectl apply -f manifests/argocd/application.yaml
 ```
 
 
-Comment accéder à ArgoCD? (admin)
-```sh
-# Récupérer le mdp admin
-kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
+#### Retirer les restes de l'amorçage
 
+Attendre que tout soit correctement installé : 
+
+```sh
+kubectl -n argocd delete --ignore-not-found \
+  serviceaccount/argocd-redis \
+  role/argocd-redis \
+  rolebinding/argocd-redis \
+  service/argocd-metrics \
+  service/argocd-server-metrics \
+  service/argocd-notifications-controller-metrics \
+  networkpolicy/argocd-application-controller-network-policy \
+  networkpolicy/argocd-applicationset-controller-network-policy \
+  networkpolicy/argocd-dex-server-network-policy \
+  networkpolicy/argocd-notifications-controller-network-policy \
+  networkpolicy/argocd-redis-network-policy \
+  networkpolicy/argocd-repo-server-network-policy \
+  networkpolicy/argocd-server-network-policy
+
+kubectl delete --ignore-not-found \
+  clusterrole/argocd-applicationset-controller \
+  clusterrolebinding/argocd-applicationset-controller
+```
+
+Comment accéder à ArgoCD? -> Utiliser son compte Github
+```sh
 # Forward le port 
 kubectl -n argocd port-forward svc/argocd-server 8443:443
 
-# ArgoCD est disponible localement (tant que le port-forward est actif)
-# Sur https://localhost:8443
-# Username: admin
-# Password: (voir commande plus haut)
-# NB: accepter le certificat "non trust" HTTPs
+# https://localhost:8443
 ```
