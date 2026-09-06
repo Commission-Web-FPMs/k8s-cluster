@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# local-path-provisioner, vu par l'application racine.
+#
+# Ce composant ne contient que l'Application qui installe le chart. Aucune
+# classe de stockage n'est déclarée ici : chacune appartient au composant qui la
+# consomme, sur le même principe que les SealedSecrets. Ce qui reste partagé, et
+# donc ici, c'est la liste des racines autorisées sur les nœuds.
+#
+# L'Application reste en vague 0. C'est ce qui garantit qu'elle est synchronisée
+# et saine avant la vague 1, où le cluster PostgreSQL réclame ses volumes.
+
+resources:
+  - application.yaml

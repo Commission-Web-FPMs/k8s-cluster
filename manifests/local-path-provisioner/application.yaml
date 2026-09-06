@@ -1,0 +1,99 @@
+# Installe local-path-provisioner, qui provisionne des volumes sur le disque
+# local des nœuds.
+#
+# Ce composant n'installe que le mécanisme, pas de classe de stockage : chaque
+# composant qui a besoin de stockage local apporte la sienne, à côté de ce qui
+# la consomme. Voir manifests/cnpg/storage-class.yaml pour le premier exemple.
+#
+# Un volume local n'est ni partagé ni répliqué : il vit sur un seul nœud, et le
+# Pod qui l'utilise ne peut plus être planifié ailleurs. C'est un défaut pour la
+# plupart des charges — le stockage S3 ou le NAS leur conviennent mieux — mais
+# c'est ce que demande une base de données qui gère elle-même sa redondance.
+#
+# Rancher ne publie pas de dépôt Helm pour ce chart : la seule source officielle
+# est le dépôt git lui-même, qu'ArgoCD sait consommer directement. D'où la forme
+# `repoURL` + `path` ci-dessous, au lieu du `chart:` habituel.
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: local-path-provisioner
+  namespace: argocd
+
+  # Pas de finalizer, délibérément. Supprimer cette Application supprimerait le
+  # provisioner, mais les classes de stockage et les volumes déjà créés
+  # appartiennent à d'autres composants et resteraient en place — simplement
+  # plus personne ne saurait les créer ni les effacer.
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/rancher/local-path-provisioner.git
+    targetRevision: v0.0.37
+    path: deploy/chart/local-path-provisioner
+
+    helm:
+      values: |
+        image:
+          repository: docker.io/rancher/local-path-provisioner
+          tag: v0.0.37
+
+        # Le chart laisse cette image sur `latest` par défaut. Elle est figée
+        # ici parce qu'elle n'est pas décorative : ce Pod éphémère est ce qui
+        # crée et efface réellement les répertoires sur les nœuds.
+        helperImage:
+          repository: docker.io/library/busybox
+          tag: "1.38.0"
+
+        storageClass:
+          # Aucune classe créée par le chart : elles vivent chez leurs
+          # consommateurs. Celle du chart ne saurait de toute façon pas
+          # s'épingler à une racine précise, le gabarit n'exposant pas le
+          # paramètre `nodePath`.
+          create: false
+
+          # À ne pas retirer, malgré l'apparence décorative. Ce nom est passé au
+          # binaire par `--provisioner-name`, et c'est lui que les StorageClass
+          # doivent citer dans leur champ `provisioner`. Sans cette valeur, le
+          # chart en fabrique un à partir du nom de la release
+          # (`cluster.local/local-path-provisioner`), et toute classe écrite à
+          # la main ailleurs dans ce dépôt cesserait silencieusement de
+          # fonctionner : les PersistentVolumeClaims resteraient simplement en
+          # attente, sans erreur.
+          provisionerName: rancher.io/local-path
+
+        # Racines disponibles sur chaque nœud. Les trois VM ayant la même
+        # configuration, une entrée par défaut suffit ; `nodePathMap` permettrait
+        # un chemin différent par nœud si un jour elles divergent.
+        #
+        # RÈGLE : quand plusieurs racines sont listées, une StorageClass qui ne
+        # précise pas son `nodePath` en choisit une au hasard. Toute classe
+        # ajoutée à ce dépôt doit donc épingler la sienne, faute de quoi un
+        # volume quelconque pourrait atterrir dans /var/lib/postgresql.
+        #
+        # ATTENTION : ce provisioner n'applique aucun quota. La taille demandée
+        # par un PersistentVolumeClaim est purement déclarative, et rien
+        # n'empêche un volume de remplir le système de fichiers du nœud. Comme
+        # les trois nœuds sont `controller+worker`, ce système de fichiers est
+        # aussi celui d'etcd. Ces chemins devraient donc être des partitions ou
+        # des disques distincts sur chaque VM.
+        nodePathMap:
+          - node: DEFAULT_PATH_FOR_NON_LISTED_NODES
+            paths:
+              # Racine générique, pour un futur consommateur sans exigence
+              # particulière sur l'emplacement.
+              - /var/lib/local-path-provisioner
+
+              # Racine de PostgreSQL, épinglée par manifests/cnpg/storage-class.yaml.
+              - /var/lib/postgresql
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: local-path-storage
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

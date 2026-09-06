@@ -14,3 +14,10 @@ resources:
   # S3 : permet d'avoir du stockage
   # Devrait être remplacé par un accès au NAS
   - csi-s3/
+
+  # Provisionne des volumes sur le disque local des nœuds, pour les charges
+  # qui gèrent elles-mêmes leur redondance. Les classes de stockage qui s'en
+  # servent appartiennent aux composants qui les consomment.
+  - local-path-provisioner/
+
+ 
