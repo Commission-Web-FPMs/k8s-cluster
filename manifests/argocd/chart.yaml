@@ -49,24 +49,24 @@ spec:
         # Voir docs/securite.md, couche 5.
         "admin.enabled": "true"
 
-        # Connexion via l'organisation GitHub du cercle. Bloqué en l'état :
-        # le connecteur réclame un identifiant et un secret d'application
-        # OAuth, et ce dépôt n'a pas encore de gestion de secrets chiffrés.
-        # C'est la dernière pièce manquante pour désactiver le compte admin.
-        # dex.config: |
-        #   connectors:
-        #     - type: github
-        #       id: github
-        #       name: GitHub
-        #       config:
-        #         clientID: $dex.github.clientID
-        #         clientSecret: $dex.github.clientSecret
-        #         orgs:
-        #           - name: Commission-Web-FPMs
-        #         # Indispensable : sans cela Dex renvoie le nom d'affichage
-        #         # de l'équipe et non son identifiant d'URL, et les règles
-        #         # `g` de policy.csv ne correspondraient à rien.
-        #         teamNameField: slug
+        
+        # Accessible via tunnels
+        url: https://localhost:8443
+
+        dex.config: |
+          connectors:
+            - type: github
+              id: github
+              name: GitHub
+              config:
+                clientID: $argocd-github-oauth:clientID
+                clientSecret: $argocd-github-oauth:clientSecret
+                orgs:
+                  - name: Commission-Web-FPMs
+                # Indispensable : sans cela Dex renvoie le nom d'affichage
+                # de l'équipe et non son identifiant d'URL, et les règles
+                # `g` de policy.csv ne correspondraient à rien.
+                teamNameField: slug
 
       rbac:
         # Refus par défaut. Une personne authentifiée qui n'est visée par

@@ -1,0 +1,45 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# ArgoCD lui-même, vu par l'application racine.
+#
+# Ce composant comporte la ressource Chart qui installe ArgoCD — et qui, ce
+# dossier étant synchronisé par ArgoCD, le rend auto-géré — ainsi que le secret
+# scellé de la connexion par GitHub, le jour où celle-ci sera activée.
+# Sa fiche est dans github-oauth.md.
+
+resources:
+  - chart.yaml
+
+  # Identifiants de l'application OAuth GitHub. Le Secret déchiffré est déjà
+  # produit dans le cluster ; il reste inerte tant que le connecteur Dex de
+  # chart.yaml est commenté, ce qui attend l'exposition durable d'ArgoCD.
+  # Sa fiche : github-oauth.md.
+  - github-oauth.sealed.yaml
+
+# ArgoCD valide toutes les ressources à blanc avant d'entamer la première
+# vague de synchronisation. Sur un cluster reconstruit depuis zéro, le type
+# SealedSecret n'existe pas encore à ce moment-là, et la validation échouerait.
+# L'annotation lui dit de ne pas valider ce qu'il ne connaît pas encore.
+#
+# Elle est posée ici plutôt que dans le fichier scellé, parce que celui-ci est
+# un artefact : kubeseal le réécrit intégralement à chaque rescellement et une
+# annotation ajoutée à la main y serait perdue au premier usage.
+#
+# Ce patch vise un type de ressource, pas un nom. Il attend donc sans rien
+# casser que le secret scellé ci-dessus soit décommenté : un patch dont la
+# cible ne correspond à aucune ressource est simplement ignoré.
+patches:
+  - target:
+      group: bitnami.com
+      kind: SealedSecret
+    patch: |
+      apiVersion: bitnami.com/v1alpha1
+      kind: SealedSecret
+      metadata:
+        # Ignoré : c'est le sélecteur `target` ci-dessus qui désigne les
+        # ressources visées. Ce champ n'est là que pour que le patch soit un
+        # document YAML valide.
+        name: ignore
+        annotations:
+          argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true

@@ -2,7 +2,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  - argocd/chart.yaml
+  - argocd/
 
   # Sealed Secrets : permet de committer des secrets chiffrés dans ce dépôt.
   # En vague -1, donc installé avant les composants qui en dépendent.

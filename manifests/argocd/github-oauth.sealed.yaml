@@ -1,0 +1,16 @@
+---
+apiVersion: bitnami.com/v1alpha1
+kind: SealedSecret
+metadata:
+  name: argocd-github-oauth
+  namespace: argocd
+spec:
+  encryptedData:
+    clientID: AgAcCp3z9rC0xhK8tDjtrVoZfcmmCcYv+OCB5biMvWIRvbnNUhShWPFgVDxW1S6jHJaPWABoEwCxSNxOee9SvGSawLvoPlXRDfY2BxaVK/dMV4T7tRiNZ3HoCaRtDkNJLxQRTCJ9x/vJj+WfjJCw/8QRpd9m06AzS4ERNNX5T24Cm1DRILjiJSedwuyC0Dx9GNOJeJoSXsOp2nK43hdNrPAzuJWJhpWmjrgDoKOD1Cwhah2/9STMp/tWCGFyNjTJCAWMZoFAa6yP02ibwqlUlwC2pGVjhCzRW3ejhYlWcFT4KbKef6UI2R/9GvQ/fzljxHLPp38lnbkuxQpFph/jCTmdM3bnflmetZhhpvvRaggzb7NYzVJkVaKzKGyOVrBmEa7jEz1RZnpItcvQA9jqD4aoYwDBR1jzAMZdqgROZAJY2+QAC37ajpuRFObhY60eZA+rnDMZZSLRA7lg+D70uujAnZdutba8kB4aD1E8vC8JVd+oN6rx//L7nrcJSw+ylzSRI2Gz2qaU1F3S99GxittH7fuQwp8rSg2Lt7MZYQt7VnyfcF2hEAt+cRzK6V/xu6qL2QO7i52lPtYfub+ouhIs24mfC6Wo8uRpVaATmzrjDEQlKAS8PGbySHYm5ZapbT/o11iQwFpDX9PtzzIUJZZbuperQbn3i+f/YSFf6URwfRiY0RNbsmSoJ3hYMLegsVShhp46+wJVfgogai2/q+A5LX12dg==
+    clientSecret: AgBtiK4/DVpOkQdXU/CazhFcf2zS/c8TqB+toG/olbl5Lk1abU3t4G1u3QGTP38Ihj7k9rdnO0F6R+3B6EbOTFJtk0FrHyJ9RYNwq8hhR0AsUNOzvhbLyELgd1MFBJyngTpXO/I9Cq4O623hmSFWRtDgcbDj3y3PgzyUo3+dITz4lt+8mnJ3ezFsOxuQqvMkLnlbLQwmXAswzITsjsavHGS2FGjyCLc22TXM2l06ir52TdLNHM8KXiS2S2O6YIfjlKD3NOD9qYa/iglRWrFMNVROxt10nuL+qQZZJhblJYvcoleK15ysSiFnZ9FZtVcS8FJMZ43NForFTujlrynB8kZudPYrZxHH4j/R/M3l+8XTFPANzvAVqn4OENALdgeU2YUgui3jp09iX9JPGcds/J/7GGBMC9+MlfuQgNydqi2db56S8SY/34+MarApoFrGCYGuw1uLeF+WeLY6HvonXAKgGkJM9PK/Yp5eHvtprx+cfZyWM1LYXV0jguvIxlZePpVDBkXtbz6Qo2Z2B/oGB59MgtNj+s2EYtHT6zt6SIsaqQeuBmntOQ5nSvaks1XRrlo/01NfYgFVTdZF7E/ONF3xz85KEYADPmoWmCnpd2zsWQFmf20iX+DMt+bRCI9I2gkCwunCLzkgrLmlQ1q2JyoJNiva9HIP2zPpglfdmgJ8S7j/XZ5RA2OQ4SBziT7J9zolsiKSzAf2zPaDr3zaiyBeU7lkQEylcfcIOQRLFeTDmk5qeY/076+w
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/part-of: argocd
+      name: argocd-github-oauth
+      namespace: argocd

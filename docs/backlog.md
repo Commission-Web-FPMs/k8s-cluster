@@ -63,8 +63,15 @@ AppProjects ──> namespaces durcis ──> accueil des projets étudiants
 
 - [ ] **Activer la connexion par GitHub.** Le connecteur est déjà écrit et
       commenté dans le chart ArgoCD. L'appartenance à une équipe de
-      l'organisation devient la source de vérité des droits.
-      *Bloqué par la gestion de secrets et par l'exposition d'ArgoCD.*
+      l'organisation devient la source de vérité des droits, et la règle
+      `g, Commission-Web-FPMs:comweb, role:comweb` de `policy.csv` n'attend
+      que cela pour devenir active. Le secret est scellé et le connecteur est
+      en place dans le chart ; il reste à créer l'application OAuth chez
+      GitHub et à décommenter `url` dans les valeurs, ce qui suffit à tout
+      allumer. Marche à suivre dans
+      [github-oauth.md](../manifests/argocd/github-oauth.md).
+      *Bloqué par la seule exposition d'ArgoCD : `url` doit être l'adresse
+      publique, qui est aussi l'URL de retour OAuth.*
 
 - [ ] **Désactiver le compte `admin` partagé.** Identifiant unique, non
       nominatif, administrateur du cluster, sans rotation prévue. Le filet de

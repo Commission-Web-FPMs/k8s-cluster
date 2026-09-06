@@ -3,6 +3,7 @@
 | Service | Description |
 | --- | --- |
 | Stockage objet S3 | [s3-credentials](../manifests/csi-s3/s3-credentials.md) |
+| Connexion GitHub d'ArgoCD | [github-oauth](../manifests/argocd/github-oauth.md) |
 
 ## Ajouter un secret
 
