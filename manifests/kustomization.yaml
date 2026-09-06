@@ -26,3 +26,5 @@ resources:
   # CloudNativePG : opérateur PostgreSQL, et le cluster à trois instances
   # qu'il pilote.
   - cnpg/
+
+  - projects/

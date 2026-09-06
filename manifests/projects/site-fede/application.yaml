@@ -1,0 +1,70 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: site-fede
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions:
+    - missingkey=error
+
+  generators:
+    - scmProvider:
+        cloneProtocol: https
+
+        github:
+          organization: Commission-Web-FPMs
+          allBranches: true
+
+        filters:
+          # Le SCM generator travaille au niveau de l'organisation,
+          # donc on restreint au repo voulu.
+          - repositoryMatch: '^site-fede-deployment$'
+
+        requeueAfterSeconds: 60
+
+  template:
+    metadata:
+      name: 'site-fede-{{ .branchNormalized }}'
+
+    spec:
+      project: default
+
+      source:
+        repoURL: https://github.com/Commission-Web-FPMs/site-fede-deployment.git
+
+        # Chaque Application suit sa propre branche.
+        targetRevision: '{{ .branch }}'
+
+        # Si Chart.yaml est à la racine
+        path: .
+
+        helm:
+        valuesObject:
+          httpRoute:
+            hostnames:
+              # Il y a pas encore le hostname *.k8s-dev.magellan.fpms.ac.be
+              # - '{{ .branchNormalized }}.dev.fede.fpms.ac.be'
+              # Donc on fait comme on peut mdr:
+              - k8s-dev.magellan.fpms.ac.be
+              # ça va rentrer en conflit si plusieurs branches
+              # il faut le path pour différencier (mais l'image le supporte pas encore...)
+              
+
+            rules:
+              - matches:
+                  - path:
+                      type: PathPrefix
+                      value: /
+
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: 'site-fede-{{ .branchNormalized }}'
+
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+
+        syncOptions:
+          - CreateNamespace=true
