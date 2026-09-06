@@ -40,22 +40,22 @@ spec:
         path: .
 
         helm:
-        valuesObject:
-          httpRoute:
-            hostnames:
-              # Il y a pas encore le hostname *.k8s-dev.magellan.fpms.ac.be
-              # - '{{ .branchNormalized }}.dev.fede.fpms.ac.be'
-              # Donc on fait comme on peut mdr:
-              - k8s-dev.magellan.fpms.ac.be
-              # ça va rentrer en conflit si plusieurs branches
-              # il faut le path pour différencier (mais l'image le supporte pas encore...)
-              
+          valuesObject:
+            httpRoute:
+              hostnames:
+                # Il y a pas encore le hostname *.k8s-dev.magellan.fpms.ac.be
+                # - '{{ .branchNormalized }}.dev.fede.fpms.ac.be'
+                # Donc on fait comme on peut mdr:
+                - k8s-dev.magellan.fpms.ac.be
+                # ça va rentrer en conflit si plusieurs branches
+                # il faut le path pour différencier (mais l'image le supporte pas encore...)
+                
 
-            rules:
-              - matches:
-                  - path:
-                      type: PathPrefix
-                      value: /
+              rules:
+                - matches:
+                    - path:
+                        type: PathPrefix
+                        value: /
 
       destination:
         server: https://kubernetes.default.svc
