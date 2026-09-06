@@ -13,9 +13,11 @@ patches:
       group: gateway.networking.k8s.io
       kind: GatewayClass
     patch: |
-      - op: add
-        path: /metadata/annotations
-        value:
+      apiVersion: gateway.networking.k8s.io
+      kind: GatewayClass
+      metadata:
+        name: ignore
+        annotations:
           argocd.argoproj.io/sync-wave: "1"
           argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 
@@ -23,8 +25,10 @@ patches:
       group: gateway.networking.k8s.io
       kind: Gateway
     patch: |
-      - op: add
-        path: /metadata/annotations
-        value:
+      apiVersion: gateway.networking.k8s.io
+      kind: Gateway
+      metadata:
+        name: ignore
+        annotations:
           argocd.argoproj.io/sync-wave: "1"
           argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
