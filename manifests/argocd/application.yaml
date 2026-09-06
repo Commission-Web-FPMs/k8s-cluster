@@ -53,23 +53,8 @@ spec:
             # Voir docs/securite.md, couche 5.
             "admin.enabled": "true"
 
-            # Connexion via l'organisation GitHub du cercle. Les identifiants
-            # ne sont pas ici : $nom-du-secret:clé désigne le Secret scellé
-            # github-oauth.sealed.yaml, qu'ArgoCD lit parce qu'il porte
-            # l'étiquette app.kubernetes.io/part-of=argocd. Sa fiche, de la
-            # création de l'application OAuth à la rotation, est dans
-            # github-oauth.md.
-            #
-            # Une référence qui ne se résout pas n'est pas une erreur pour
-            # ArgoCD : il journalise un avertissement et laisse la chaîne
-            # telle quelle. L'ordre d'arrivée du Secret n'a donc pas
-            # d'importance au bootstrap.
-            #
-            # Il manque encore `url`, l'adresse publique d'ArgoCD, sans
-            # laquelle ArgoCD tient Dex pour non configuré et ignore ce
-            # connecteur. Elle sera ajoutée ici même, avec le nom de domaine
-            # réel, le jour de l'exposition durable — c'est la seule chose
-            # qui manque. Voir github-oauth.md et docs/backlog.md.
+            url: "https://localhost:8443"
+
             "dex.config": |
               connectors:
                 - type: github
