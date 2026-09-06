@@ -1,5 +1,3 @@
-# Installe Traefik comme Gateway Controller HTTP(S) du cluster Kubernetes.
-
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -25,7 +23,13 @@ spec:
           kubernetesGateway:
             enabled: true
 
-        # Les ressources Gateway API sont déclarées séparément dans Git.
+        # Les classes et Gateway sont gérés séparément dans Git.
+        ingressClass:
+          enabled: false
+
+        gatewayClass:
+          enabled: false
+
         gateway:
           enabled: false
 
