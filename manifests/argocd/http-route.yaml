@@ -22,4 +22,4 @@ spec:
 
       backendRefs:
         - name: argocd-server
-          port: 8080
+          port: 80
