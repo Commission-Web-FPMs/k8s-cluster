@@ -48,20 +48,14 @@ AppProjects ──> namespaces durcis ──> accueil des projets étudiants
       Deux points à ne pas rater : le fichier contient la clé privée et ne va
       pas dans ce dépôt, et il doit être connu d'au moins deux personnes.
 
-- [ ] **Tenir l'inventaire des secrets scellés.** Le patron est en place :
+- [x] **Tenir l'inventaire des secrets scellés.** Le patron est en place :
       chaque secret scellé est accompagné d'une fiche voisine, sur le modèle de
       [s3-credentials.md](../manifests/csi-s3/s3-credentials.md), et
       [secrets-inventaire.md](./secrets-inventaire.md) n'en contient que la
       liste et les liens. Aucune valeur n'y figure, tout vit donc dans ce dépôt.
       C'est ce qui rend une rotation d'urgence mécanique plutôt que devinatoire.
 
-- [ ] **Compléter la révocation dans la fiche S3.** L'émission renvoie au
-      gestionnaire de `6700067.xyz`, mais la section « Révoquer l'ancien
-      identifiant » de
-      [s3-credentials.md](../manifests/csi-s3/s3-credentials.md) reste à écrire.
-      C'est celle qu'on lit en urgence.
-
-- [ ] **Faire entrer le Secret S3 dans le dépôt.** Aujourd'hui les identifiants
+- [x] **Faire entrer le Secret S3 dans le dépôt.** Aujourd'hui les identifiants
       du stockage sont créés à la main. Un cluster reconstruit depuis ce dépôt
       n'a donc pas de stockage, et personne ne le découvrira avant d'en avoir
       besoin. Débloqué par le contrôleur Sealed Secrets ; la commande exacte

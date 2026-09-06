@@ -306,7 +306,7 @@ kubectl create secret generic csi-s3-secret \
   --from-literal=accessKeyID='...' \
   --from-literal=secretAccessKey='...' \
   --from-literal=endpoint='https://s3dupauvre.6700067.xyz' \
-  --from-literal=region='' \
+  --from-literal=region='us-east-1' \
   --dry-run=client -o yaml \
 | kubeseal --controller-namespace sealed-secrets --format yaml \
 > manifests/csi-s3/s3-credentials.sealed.yaml

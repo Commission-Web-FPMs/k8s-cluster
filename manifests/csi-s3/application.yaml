@@ -56,6 +56,12 @@ spec:
           # compat_dir : s3fs reconnaît les répertoires créés par d'autres
           # outils S3, qui ne suivent pas tous la même convention.
           mountOptions: "-o compat_dir"
+          # Sans cette valeur, le pilote crée un bucket par PersistentVolume.
+          # Le fournisseur ne l'autorise pas : la clé n'a de droits que sur ce
+          # bucket-ci, et la création échoue en « Access Denied ».
+          # Avec elle, chaque volume devient un préfixe à l'intérieur du bucket
+          # existant, et le bucket lui-même n'est jamais créé ni supprimé.
+          singleBucket: k8s-dev-test-exp
 
         secret:
           create: false
