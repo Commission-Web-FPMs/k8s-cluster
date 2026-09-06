@@ -36,6 +36,13 @@ spec:
       # ----------------------------------------------------------------
       valuesObject:
         configs:
+          params:
+            #  Uniquement si sous "/argocd"
+            "server.rootpath": "/argocd"
+            "server.basehref": "/argocd"
+            # Car traefik fait le proxy
+            "server.insecure": "true"
+
           cm:
             # Personne ne consulte ArgoCD sans s'authentifier.
             "users.anonymous.enabled": "false"
@@ -56,7 +63,9 @@ spec:
             # Voir docs/securite.md, couche 5.
             "admin.enabled": "true"
 
-            url: "https://localhost:8443"
+            # URL à changer!
+            url: "https://k8s-dev.magellan.fpms.ac.be/argocd"
+          
 
             "dex.config": |
               expiry:
