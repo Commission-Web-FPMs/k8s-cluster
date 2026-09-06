@@ -13,6 +13,9 @@ spec:
 
     helm:
       values: |
+        deployment:
+          kind: DaemonSet
+
         providers:
           kubernetesIngress:
             enabled: false
@@ -38,6 +41,7 @@ spec:
             metallb.io/loadBalancerIPs: 172.17.0.110
           spec:
             type: LoadBalancer
+            externalTrafficPolicy: Local
 
   destination:
     server: https://kubernetes.default.svc
