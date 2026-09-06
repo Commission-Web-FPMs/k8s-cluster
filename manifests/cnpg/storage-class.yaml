@@ -46,21 +46,7 @@ parameters:
 # cluster PostgreSQL.
 volumeBindingMode: WaitForFirstConsumer
 
-# Delete, et non Retain comme sur le stockage S3.
-#
-# C'est contre-intuitif pour une base de données, mais c'est la procédure de
-# réparation qui l'impose : quand un nœud est perdu définitivement, on supprime
-# le PersistentVolumeClaim de l'instance concernée pour que CloudNativePG la
-# reconstruise ailleurs (voir le commentaire d'anti-affinité dans
-# cluster/comweb-db.yaml). Avec Retain, chaque réparation laisserait derrière
-# elle un répertoire de plusieurs Go que personne ne nettoierait, sur des nœuds
-# dont le disque est déjà le point sensible.
-#
-# Ce que Retain aurait protégé — une suppression accidentelle — est traité en
-# amont, par l'annotation `Prune=false` posée sur la ressource Cluster. Et la
-# vraie sauvegarde n'est ni l'un ni l'autre : voir le TODO de
-# cluster/comweb-db.yaml.
-reclaimPolicy: Delete
+reclaimPolicy: Retain
 
 # Le provisioner sait agrandir un volume, mais n'applique aucun quota : la
 # taille demandée reste déclarative, et la seule limite réelle est celle du

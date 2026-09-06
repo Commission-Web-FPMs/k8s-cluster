@@ -1,0 +1,21 @@
+# Namespace du cluster PostgreSQL.
+#
+# Il est déclaré ici plutôt que créé automatiquement, pour deux raisons. La
+# première est celle du backlog : un namespace créé à la volée naît sans ses
+# étiquettes de sécurité. La seconde est propre à ce composant : le namespace
+# apparaît dans le chemin des volumes sur les nœuds
+# (/var/lib/postgresql/<namespace>/…), ce n'est donc pas un détail
+# d'organisation mais une donnée de la disposition sur disque.
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: comweb-db
+  labels:
+    # Pod Security Admission, sur le patron prévu par docs/backlog.md :
+    # `baseline` appliqué, `restricted` en simple avertissement pour voir ce qui
+    # casserait avant de durcir. Les Pods créés par CloudNativePG tournent en
+    # non-root, sans élévation de privilèges et sans capacités, donc `baseline`
+    # ne les gêne pas.
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/warn: restricted

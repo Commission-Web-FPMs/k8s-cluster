@@ -1,0 +1,132 @@
+# Cluster PostgreSQL à trois instances : un primaire et deux réplicas.
+#
+# Les trois instances ne sont pas trois sauvegardes fabriquées au besoin : ce
+# sont trois copies complètes et vivantes de la base, tenues synchrones par la
+# réplication en flux de PostgreSQL, une par nœud. La perte d'un nœud fait donc
+# basculer le service sur une copie déjà à jour, sans transfert de données.
+#
+# CloudNativePG n'utilise pas de StatefulSet : il gère lui-même les Pods et les
+# PersistentVolumeClaims, qu'il nomme <cluster>-1, <cluster>-2 et <cluster>-3.
+# Ce sont ces noms qui apparaissent dans le chemin des volumes sur les nœuds.
+#
+# Les applications ne parlent jamais aux Pods, mais aux services que l'opérateur
+# maintient :
+#   comweb-db-rw  le primaire, lecture et écriture
+#   comweb-db-ro  les réplicas, lecture seule
+#   comweb-db-r   n'importe quelle instance, lecture
+# Le rôle de primaire se déplace lors d'une bascule : s'adresser à un Pod
+# nommément reviendrait à écrire sur une instance en lecture seule un jour sur
+# trois.
+
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: comweb-db
+  namespace: comweb-db
+
+  annotations:
+    # Vague 1 : l'opérateur et sa CRD sont installés en vague 0 et doivent être
+    # sains avant que cette ressource ne soit appliquée. Même mécanique que la
+    # configuration de MetalLB.
+    argocd.argoproj.io/sync-wave: "1"
+
+    # Deux options, séparées par une virgule.
+    #
+    # SkipDryRunOnMissingResource : ArgoCD valide toutes les ressources à blanc
+    #   avant la première vague. Sur un cluster reconstruit depuis zéro, le type
+    #   Cluster n'existe pas encore à ce moment-là et la validation échouerait
+    #   avant même d'avoir installé l'opérateur qui le définit.
+    #
+    # Prune=false : garde-fou sur les données. L'application racine synchronise
+    #   avec `prune: true`, donc retirer ce composant de manifests/kustomization.yaml,
+    #   renommer ce fichier ou le déplacer suffirait à supprimer cette ressource.
+    #   L'opérateur détruirait alors les trois instances et leurs
+    #   PersistentVolumeClaims, et la classe `postgres-local` étant en
+    #   `reclaimPolicy: Delete`, les répertoires seraient effacés sur les trois
+    #   nœuds. Sans confirmation, et sans que la manœuvre ait l'air dangereuse.
+    #   Avec cette option, une suppression volontaire redevient un geste
+    #   explicite, à faire au `kubectl` en connaissance de cause.
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  instances: 3
+
+  # Version figée, comme les charts de ce dépôt. C'est aussi la valeur par
+  # défaut de l'opérateur 1.30.0 : l'écrire ici ne change rien aujourd'hui, mais
+  # évite qu'une montée de version de l'opérateur n'entraîne une montée de
+  # version majeure de PostgreSQL sans qu'on l'ait décidé.
+  imageName: ghcr.io/cloudnative-pg/postgresql:18.6-minimal-trixie
+
+  # Lors d'une mise à jour, l'opérateur redémarre les réplicas puis bascule le
+  # primaire sans intervention. `supervised` attendrait une bascule manuelle,
+  # ce qui suppose quelqu'un pour la faire.
+  primaryUpdateStrategy: unsupervised
+
+  storage:
+    storageClass: postgres-local
+    # Rappel : cette taille n'est pas appliquée par le provisioner local, elle
+    # sert au dimensionnement et à la lisibilité. La seule limite réelle est
+    # celle du système de fichiers du nœud.
+    size: 20Gi
+
+  # Les WAL ne sont volontairement pas séparés sur un second volume
+  # (`.spec.walStorage`). Sur des nœuds à disque unique, la séparation
+  # n'apporterait aucun parallélisme d'entrées-sorties, et l'opération est à sens
+  # unique : une fois un volume de WAL ajouté, il ne peut plus être retiré.
+
+  affinity:
+    enablePodAntiAffinity: true
+    topologyKey: kubernetes.io/hostname
+
+    # `required` et non `preferred` : c'est ce qui garantit une instance par
+    # nœud, donc une copie de la base par VM. Avec `preferred`, Kubernetes
+    # ferait de son mieux, mais rien n'empêcherait deux instances de se
+    # retrouver sur la même machine — et la perte de cette machine emporterait
+    # alors deux copies sur trois.
+    #
+    # Le prix à payer se voit le jour où un nœud est perdu définitivement. Les
+    # deux nœuds survivants hébergent déjà une instance chacun, donc aucune
+    # place n'est libre : le cluster tourne en mode dégradé à deux instances
+    # jusqu'à ce que la VM soit reconstruite. La séquence de réparation est
+    # alors, une fois le nœud de retour dans le cluster :
+    #
+    #   kubectl delete -n comweb-db pvc/comweb-db-1 pod/comweb-db-1
+    #
+    # Supprimer le PersistentVolumeClaim est la façon de déclarer que l'ancien
+    # nœud ne reviendra pas : tant qu'il existe, il reste lié à un volume soudé à
+    # une machine morte et le Pod n'est planifiable nulle part. L'opérateur crée
+    # ensuite un volume neuf et resynchronise l'instance depuis le primaire.
+    #
+    # Avec `preferred`, cette reconstruction serait immédiate et automatique,
+    # mais sur un nœud déjà occupé. Le choix ici est de préférer la répartition
+    # garantie à l'auto-réparation.
+    podAntiAffinityType: required
+
+  # Ressources volontairement modestes, et requêtes égales aux limites pour que
+  # les Pods soient en qualité de service « Guaranteed ». Les trois nœuds étant
+  # `controller+worker`, PostgreSQL partage ses machines avec etcd : mieux vaut
+  # une base bridée qu'un plan de contrôle affamé. À ajuster à l'usage réel.
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+
+  # Sans section `bootstrap`, l'opérateur crée une base `app` et un rôle `app`,
+  # dont le mot de passe est généré et déposé dans le Secret `comweb-db-app`.
+  # Ce secret est produit dans le cluster, il n'a donc pas à être scellé ici.
+
+  # TODO sauvegarde : trois copies locales sur trois VM du même rack ne sont pas
+  # une sauvegarde. Elles protègent d'une panne de machine, pas d'un DROP TABLE
+  # ni d'une perte du site. L'archivage des WAL vers le S3 déjà en place
+  # (manifests/csi-s3/) donnerait en plus une restauration à un instant donné.
+  #
+  # Passer directement par le plugin Barman Cloud, et non par le champ
+  # `.spec.backup.barmanObjectStore` : celui-ci est déprécié depuis
+  # CloudNativePG 1.26 et sera retiré en 1.31, donc l'écrire aujourd'hui
+  # reviendrait à programmer une migration.
+  #
+  # À prévoir : un SealedSecret est chiffré pour un namespace précis, les
+  # identifiants S3 devront donc être rescellés pour `comweb-db` (voir
+  # docs/secrets.md), avec leur fiche, sur le modèle de s3-credentials.md.
