@@ -10,6 +10,7 @@ kind: Kustomization
 
 resources:
   - application.yaml
+  - http-route.yaml
 
   - github-oauth.sealed.yaml
 
