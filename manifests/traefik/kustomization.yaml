@@ -4,6 +4,7 @@ kind: Kustomization
 # Traefik, vu par l'application racine.
 
 resources:
+  - application-crd.yaml
   - application.yaml
   - gatewayclass.yaml
   - gateway.yaml
