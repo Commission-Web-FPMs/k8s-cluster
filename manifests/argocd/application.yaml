@@ -146,8 +146,8 @@ spec:
                   prune: true
                   selfHeal: true
 
-                syncOptions:
-                  - ServerSideApply=true
+                # syncOptions:
+                #  - ServerSideApply=true
 
   destination:
     server: https://kubernetes.default.svc
