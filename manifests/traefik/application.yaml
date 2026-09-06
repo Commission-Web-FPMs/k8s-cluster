@@ -1,0 +1,47 @@
+# Installe Traefik comme Gateway Controller HTTP(S) du cluster Kubernetes.
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: traefik
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: https://traefik.github.io/charts
+    chart: traefik
+    targetRevision: 41.4.0
+
+    helm:
+      values: |
+        providers:
+          kubernetesIngress:
+            enabled: false
+
+          kubernetesCRD:
+            enabled: false
+
+          kubernetesGateway:
+            enabled: true
+
+        # Les ressources Gateway API sont déclarées séparément dans Git.
+        gateway:
+          enabled: false
+
+        service:
+          annotations:
+            metallb.io/loadBalancerIPs: 172.17.0.110
+          spec:
+            type: LoadBalancer
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: traefik
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
