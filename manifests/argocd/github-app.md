@@ -5,7 +5,7 @@ Ajouter les credentials d'une APP de l'orga Github pour éviter les problèmes d
 ## Instructions
 
 - Créer une GitHub App dédiée, par exemple argocd, dans l’organisation GitHub.
-- Lui donner seulement les permissions nécessaires. Pour le scmProvider, Metadata: Read-only suffit. Pour les webhook ajouter Content: Read-Only. (nécessaire pour le webhook push).
+- Lui donner seulement les permissions nécessaires. Pour le scmProvider, Metadata: Read-only suffit. Pour les webhook ajouter Content: Read-Only. (nécessaire pour le webhook push). Vérifier que "Subscribe to Event" : Push est coché!!
 
 - Installer l’App uniquement sur les repositories publics à exposer à Argo CD. Éviter All repositories si tu veux qu’elle n’ait même pas accès aux métadonnées des repos privés.
 

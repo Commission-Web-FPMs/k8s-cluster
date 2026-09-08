@@ -2,6 +2,8 @@
 
 Possible de réutiliser l'app créée dans [github-app.md](./github-app.md); réutiliser celle-là.
 
+Vérifier que "Subscribe to Event" : Push est coché!!
+
 ## Instructions
 
 - Modifier l'app sur github. Ajouter webhook: "active"
