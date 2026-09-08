@@ -5,6 +5,7 @@
 | Stockage objet S3 | [s3-credentials](../manifests/csi-s3/s3-credentials.md) |
 | Connexion GitHub d'ArgoCD | [github-oauth](../manifests/argocd/github-oauth.md) |
 | App GitHub ArgoCD | [github-oauth](../manifests/argocd/github-app.md) |
+| GitHub Webhook ArgoCD | [github-oauth](../manifests/argocd/github-webhook.md) |
 
 ## Ajouter un secret
 

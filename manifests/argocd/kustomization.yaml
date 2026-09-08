@@ -14,6 +14,7 @@ resources:
 
   - github-oauth.sealed.yaml
   - github-app.sealed.yaml
+  - github-webhook.sealed.yaml
 
 # ArgoCD valide toutes les ressources à blanc avant d'entamer la première
 # vague de synchronisation. Sur un cluster reconstruit depuis zéro, le type

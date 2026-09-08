@@ -36,6 +36,9 @@ spec:
       # ----------------------------------------------------------------
       valuesObject:
         configs:
+          secret:
+            githubSecret: "$github-webhook:webhook.github.secret"
+
           params:
             #  Uniquement si sous "/argocd"
             "server.rootpath": "/argocd"
