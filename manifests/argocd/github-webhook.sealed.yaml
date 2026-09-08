@@ -9,5 +9,7 @@ spec:
     webhook.github.secret: AgARnzmRJVbIrRPdacV/75HTbbmfL8NW2woO9c8wwH2hXa7xOWNwX+TvN4yfTmL07pLCUVgjNmXgv9qjgjemrvdZFdTeNH5A9oXG/JyRYNq1HDKRI8sFdV8PZsK/eC4TXMRWH3Z2JMx2N+9O/uaJ2uI0rfs8FizZj5XvqATfokFqmoLze9wYCfPXNfgsBh4dLlqtgjKWi+/8d75uQlDkG25S7KN/vZOVyh8eTdXwlIynJ/QuySxrAFuZlngD/AUkTOV8N3hEHtS4WCavoIMPNmEWGkUF+fH+k963yGUg2TFxWlxYqN6l411ZgizSLj62DMkIHeMFIsp18zJFfCtZmydi0RrRPvUG3sblNtF3tuPjUtV+dCPBiaaJBSBSDs8u4GF9h7Q05/p2jY0dnCC7xR2ZHhssHL1Rd5J7UmAWHfJxMjDJGRnx1aTJPudn2Qx9xX39eI7XPtLJJ8Jeb5ep04AYP2edTsR7MBq7ReG//Z++NFgQgsk+KrRrx//CHENFjxxcSvfAXRDOGLYbh5YmnvSvXPe+Fa2XF88J0VbD/qDHZc3LCoriWvH8vkCOQ+8JUEpyVLvRxG5lCUv6aW+WXfW36NDYzoszHcHBgHHu4rzEo1w9fqcdWbkd+uTETtr25Y7EnC5chVstt5w9DZMF7HcqD4CLItBnfQdF7CrwGFvJZjncAzEejgoHMMPYDd+hqmsWhrr9/cTKsbmLqCde3pjqbqiIgCtKnX9IGxS9XGMgPxt+R/ob8HgcsOoEkrQbEE/Y6Z+l7nKTkpy38KKHlZoC
   template:
     metadata:
+      labels:
+        app.kubernetes.io/part-of: argocd
       name: github-webhook
       namespace: argocd

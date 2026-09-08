@@ -14,6 +14,8 @@ Possible de réutiliser l'app créée dans [github-app.md](./github-app.md); ré
 kubectl create secret -n argocd generic github-webhook \
   --from-literal=webhook.github.secret='...' \
   --dry-run=client -o yaml \
+| kubectl label --local -f - --dry-run=client -o yaml \
+    app.kubernetes.io/part-of=argocd \
 | kubeseal \
     --controller-namespace sealed-secrets \
     --format yaml \
