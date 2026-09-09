@@ -15,11 +15,11 @@ spec:
   hostnames:
     - argocd.web.magellan.fpms.ac.be
 
-  # rules:
-  #   - matches:
-  #       - path:
-  #           type: PathPrefix
-  #           value: /argocd
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /argocd
 
       backendRefs:
         - name: argocd-server
