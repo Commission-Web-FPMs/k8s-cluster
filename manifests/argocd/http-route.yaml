@@ -13,13 +13,13 @@ spec:
       sectionName: http
 
   hostnames:
-    - k8s-dev.magellan.fpms.ac.be
+    - argocd.web.magellan.fpms.ac.be
 
-  rules:
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /argocd
+  # rules:
+  #   - matches:
+  #       - path:
+  #           type: PathPrefix
+  #           value: /argocd
 
       backendRefs:
         - name: argocd-server
