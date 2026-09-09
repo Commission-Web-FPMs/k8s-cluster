@@ -41,8 +41,8 @@ spec:
 
           params:
             #  Uniquement si sous "/argocd"
-            "server.rootpath": "/argocd"
-            "server.basehref": "/argocd"
+            # "server.rootpath": "/argocd"
+            # "server.basehref": "/argocd"
             # Car traefik fait le proxy
             "server.insecure": "true"
 
@@ -67,7 +67,7 @@ spec:
             "admin.enabled": "true"
 
             # URL à changer!
-            url: "https://k8s-dev.magellan.fpms.ac.be/argocd"
+            url: "https://argocd.web.magellan.fpms.ac.be"
           
 
             "dex.config": |
