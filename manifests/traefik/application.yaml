@@ -16,6 +16,14 @@ spec:
         deployment:
           kind: DaemonSet
 
+        # NPM termine le TLS en amont. Conserver ses headers HTTPS et IP client,
+        # sans faire confiance aux headers fournis par les autres sources.
+        ports:
+          web:
+            forwardedHeaders:
+              trustedIPs:
+                - 172.17.0.1/32
+
         providers:
           kubernetesIngress:
             enabled: false

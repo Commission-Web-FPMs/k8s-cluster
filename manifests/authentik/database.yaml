@@ -1,0 +1,16 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: authentik
+  namespace: comweb-db
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true,Prune=false
+spec:
+  # Même ressource CNPG et même base SQL : réconciliation sans recréation.
+  name: authentik
+  owner: authentik
+  cluster:
+    name: comweb-db
+  # Retirer la ressource ne doit pas effacer les comptes et la configuration.
+  databaseReclaimPolicy: retain

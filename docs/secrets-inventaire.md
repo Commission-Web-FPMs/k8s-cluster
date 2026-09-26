@@ -6,6 +6,7 @@
 | Connexion GitHub d'ArgoCD | [github-oauth](../manifests/argocd/github-oauth.md) |
 | App GitHub ArgoCD | [github-oauth](../manifests/argocd/github-app.md) |
 | GitHub Webhook ArgoCD | [github-oauth](../manifests/argocd/github-webhook.md) |
+| Authentik et rôle PostgreSQL dédié | [authentik-secret et authentik-db-credentials](../manifests/authentik/secrets.md) — existants, rescellés sans rotation |
 
 ## Ajouter un secret
 

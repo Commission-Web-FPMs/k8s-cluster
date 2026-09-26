@@ -50,6 +50,22 @@ metadata:
 spec:
   instances: 3
 
+  # Reprendre le rôle authentik existant et son mot de passe actuel.
+  # Le Secret basic-auth existant est seulement rescellé, jamais régénéré.
+  # Le bootstrap implicite app reste inchangé.
+  managed:
+    roles:
+      - name: authentik
+        ensure: present
+        login: true
+        superuser: false
+        createdb: false
+        createrole: false
+        replication: false
+        bypassrls: false
+        passwordSecret:
+          name: authentik-db-credentials
+
   # Version figée, comme les charts de ce dépôt. C'est aussi la valeur par
   # défaut de l'opérateur 1.30.0 : l'écrire ici ne change rien aujourd'hui, mais
   # évite qu'une montée de version de l'opérateur n'entraîne une montée de

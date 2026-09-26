@@ -1,0 +1,27 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Vague 0 : namespace, secrets et politique réseau ; 1 : Cluster CNPG et rôle ;
+# 2 : base ; 3 : Application et route. Les opérateurs réconcilient ensuite
+# leurs dépendances : les vagues ne garantissent pas la disponibilité SQL.
+resources:
+  - namespace.yaml
+  - database.yaml
+  - network-policy.yaml
+  - application.yaml
+  - http-route.yaml
+  # Rescellement des Secrets live, déjà contrôlés par ces mêmes SealedSecrets.
+  - authentik-secret.sealed.yaml
+  - authentik-db-credentials.sealed.yaml
+
+patches:
+  - target:
+      group: bitnami.com
+      kind: SealedSecret
+    patch: |
+      apiVersion: bitnami.com/v1alpha1
+      kind: SealedSecret
+      metadata:
+        name: ignore
+        annotations:
+          argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true

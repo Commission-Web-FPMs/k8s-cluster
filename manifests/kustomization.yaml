@@ -27,4 +27,7 @@ resources:
   # qu'il pilote.
   - cnpg/
 
+  # Fournisseur d'identité commun, adossé au cluster PostgreSQL existant.
+  - authentik/
+
   - projects/

@@ -1,0 +1,95 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: authentik
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+
+spec:
+  project: default
+  source:
+    repoURL: https://charts.goauthentik.io
+    chart: authentik
+    # Reprise de l’Application existante : mise à jour 2026.8.2 -> 2026.8.3.
+    targetRevision: 2026.8.3
+    helm:
+      releaseName: authentik
+      valuesObject:
+        # Conserver le Secret existant et ses éventuelles autres options.
+        # Les références explicites aux deux clés sensibles restent obligatoires.
+        authentik:
+          enabled: false
+          existingSecret:
+            secretName: authentik-secret
+        postgresql:
+          enabled: false
+        # OIDC ne nécessite ni outpost géré ni accès à l'API Kubernetes.
+        serviceAccount:
+          create: false
+        global:
+          env:
+            - name: AUTHENTIK_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: authentik-secret
+                  key: AUTHENTIK_SECRET_KEY
+            - name: AUTHENTIK_POSTGRESQL__PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: authentik-secret
+                  key: AUTHENTIK_POSTGRESQL__PASSWORD
+            - name: AUTHENTIK_POSTGRESQL__HOST
+              value: comweb-db-rw.comweb-db.svc.cluster.local
+            - name: AUTHENTIK_POSTGRESQL__PORT
+              value: "5432"
+            - name: AUTHENTIK_POSTGRESQL__NAME
+              value: authentik
+            - name: AUTHENTIK_POSTGRESQL__USER
+              value: authentik
+            - name: AUTHENTIK_POSTGRESQL__SSLMODE
+              value: require
+            - name: AUTHENTIK_WEB__BASE_URL
+              value: https://auth.web.magellan.fpms.ac.be
+            # Traefik contacte Authentik depuis le réseau des Pods k0s.
+            # network-policy.yaml limite les connexions entrantes à Traefik.
+            - name: AUTHENTIK_LISTEN__TRUSTED_PROXY_CIDRS
+              value: 10.244.0.0/16
+        server:
+          replicas: 1
+          serviceAccountName: default
+          automountServiceAccountToken: false
+          ingress:
+            enabled: false
+          route:
+            main:
+              enabled: false
+          # Probes natives du chart conservées, y compris startupProbe.
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+        worker:
+          replicas: 1
+          serviceAccountName: default
+          automountServiceAccountToken: false
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: authentik
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

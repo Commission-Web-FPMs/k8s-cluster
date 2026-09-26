@@ -20,6 +20,7 @@ Il a pour vocation de contenir :
 4. [Gestion des secrets](./docs/secrets.md)
    - [Inventaire des secrets](./docs/secrets-inventaire.md)
 5. [Améliorations prévues](./docs/backlog.md)
+6. [Authentik : identité, déploiement et exploitation](./docs/authentik.md)
 
 ## Bootstrapping
 
