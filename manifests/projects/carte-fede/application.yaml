@@ -78,7 +78,21 @@ spec:
               - secretRef:
                   name: authentik-credentials
             {{- end }}
+            {{- if eq .branch "main" }}
+            rateLimit:
+              sourceCriterion:
+                ipStrategy:
+                  depth: 1
+            {{- end }}
             httpRoute:
+              {{- if eq .branch "main" }}
+              filters:
+                - type: ExtensionRef
+                  extensionRef:
+                    group: traefik.io
+                    kind: Middleware
+                    name: carte-fede-npm-only
+              {{- end }}
               hostnames:
                 # Il y a pas encore le hostname *.k8s-dev.magellan.fpms.ac.be
                 # - '{{ .branchNormalized }}.dev.fede.fpms.ac.be'

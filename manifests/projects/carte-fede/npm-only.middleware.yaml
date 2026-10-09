@@ -1,0 +1,12 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: carte-fede-npm-only
+  namespace: carte-fede-main
+  annotations:
+    argocd.argoproj.io/sync-wave: '-1'
+spec:
+  ipAllowList:
+    # No ipStrategy: evaluate the TCP peer, never a client-supplied header.
+    sourceRange:
+      - 172.17.0.1/32
