@@ -52,7 +52,6 @@ spec:
               - secretRef:
                   name: authentik-credentials
             {{- end }}
-          valuesObject:
             httpRoute:
               hostnames:
                 # Il y a pas encore le hostname *.k8s-dev.magellan.fpms.ac.be
