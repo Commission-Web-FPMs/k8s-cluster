@@ -36,7 +36,8 @@ PY
 
 kubectl -n authentik exec -i deployment/authentik-worker -- \
   ak hash_password \
-  < "$bootstrap_dir/password" > "$bootstrap_dir/password-hash"
+  < "$bootstrap_dir/password" \
+| tr -d '\r\n' > "$bootstrap_dir/password-hash"
 
 printf '%s' 'commission.web.fpms@gmail.com' > "$bootstrap_dir/email"
 
@@ -62,7 +63,8 @@ Pour préparer une installation neuve sans worker existant, la même commande
 
 ```sh
 docker run --rm -i ghcr.io/goauthentik/server:2026.8.2 hash_password \
-  < "$bootstrap_dir/password" > "$bootstrap_dir/password-hash"
+  < "$bootstrap_dir/password" \
+| tr -d '\r\n' > "$bootstrap_dir/password-hash"
 ```
 
 Les variables de bootstrap ne servent pas à la rotation ultérieure du mot
