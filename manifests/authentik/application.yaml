@@ -32,6 +32,8 @@ spec:
 
         global:
           env:
+            - name: AUTHENTIK_WEB__BASE_URL
+              value: https://auth.fede.fpms.ac.be
             - name: AUTHENTIK_POSTGRESQL__HOST
               value: comweb-db-rw.comweb-db.svc.cluster.local
             - name: AUTHENTIK_POSTGRESQL__PORT
