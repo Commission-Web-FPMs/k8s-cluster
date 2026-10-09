@@ -4,7 +4,7 @@ metadata:
   name: carte-fede-main
   namespace: comweb-db
   annotations:
-    argocd.argoproj.io/sync-wave: "-2"
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   cluster:
     name: comweb-db
@@ -25,7 +25,7 @@ metadata:
   name: carte-fede-main
   namespace: comweb-db
   annotations:
-    argocd.argoproj.io/sync-wave: "-1"
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   cluster:
     name: comweb-db

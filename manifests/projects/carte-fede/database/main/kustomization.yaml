@@ -3,11 +3,3 @@ kind: Kustomization
 resources:
   - database.yaml
   - postgresql-credentials.sealed.yaml
-patches:
-  - target:
-      kind: SealedSecret
-    patch: |
-      - op: add
-        path: /metadata/annotations
-        value:
-          argocd.argoproj.io/sync-wave: "-3"

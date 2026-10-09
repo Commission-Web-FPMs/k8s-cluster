@@ -5,6 +5,7 @@ resources:
   - application.yaml
   - namespace-main.yaml
   - authentik-credentials-main.sealed.yaml
+  - database/main
   - ../../authentik/integrations/carte-fede-main/application
 
 patches:
@@ -14,6 +15,15 @@ patches:
     patch: |
       apiVersion: bitnami.com/v1alpha1
       kind: SealedSecret
+      metadata:
+        name: ignore
+        annotations:
+          argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+  - target:
+      group: postgresql.cnpg.io
+    patch: |
+      apiVersion: postgresql.cnpg.io/v1
+      kind: ignore
       metadata:
         name: ignore
         annotations:

@@ -9,7 +9,7 @@
 | Administrateur initial Authentik | [authentik-bootstrap](../manifests/authentik/authentik-bootstrap.md) |
 | Provisionnement Authentik de carte-fede main | [carte-fede-credentials](../manifests/authentik/carte-fede-credentials.md) |
 | Backend carte-fede main vers Authentik | [authentik-credentials](../manifests/projects/carte-fede/authentik-credentials-main.md) |
-| PostgreSQL de carte-fede, par branche | [postgresql-credentials](../manifests/projects/carte-fede/postgresql-credentials.md) |
+| PostgreSQL de carte-fede main | [postgresql-credentials](../manifests/projects/carte-fede/postgresql-credentials.md) |
 
 ## Ajouter un secret
 

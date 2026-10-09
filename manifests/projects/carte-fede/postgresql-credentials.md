@@ -1,39 +1,31 @@
 # PostgreSQL de carte-fede
 
-Chaque branche possède un dossier `database/<branche normalisée>/` avec
-les mêmes ressources qu'Authentik : `DatabaseRole`, `Database` et SealedSecrets.
-La seconde source dans `application.yaml` sélectionne ce dossier.
-Les branches actuellement déclarées sont `main`,
-`codex/frontend-backend-http-routes` et `copilot/rajouter-envfrom-values-yml`.
+Seule la branche `main` possède une base PostgreSQL. Le dossier `database/main/`
+contient les mêmes ressources qu'Authentik : `DatabaseRole`, `Database` et
+SealedSecrets. Le `kustomization.yaml` du projet les inclut directement.
 
-Chaque rôle possède sa base et peut y créer les tables et effectuer les
+Le rôle possède sa base et peut y créer les tables et effectuer les
 migrations. Il ne peut pas créer d'autres bases ou rôles, répliquer ou
-contourner les politiques RLS. Les règles `pg_hba` limitent chaque compte
+contourner les politiques RLS. Les règles `pg_hba` limitent le compte
 à sa base homonyme et imposent TLS avec SCRAM. La connexion utilise
 `sslmode=require`, sans vérifier le certificat serveur.
 
-Chaque dossier contient deux SealedSecrets, scellés séparément avec le même
-mot de passe propre à cette branche.
+Le dossier contient deux SealedSecrets, scellés séparément avec le même
+mot de passe.
 
 | Namespace | Secret | Clés |
 | --- | --- | --- |
-| `comweb-db` | `carte-fede-<branche normalisée>-db-credentials` | `username`, `password`, type `kubernetes.io/basic-auth` |
-| `carte-fede-<branche normalisée>` | `postgresql-credentials` | `DATABASE_URL` |
+| `comweb-db` | `carte-fede-main-db-credentials` | `username`, `password`, type `kubernetes.io/basic-auth` |
+| `carte-fede-main` | `postgresql-credentials` | `DATABASE_URL` |
 
 Les Secrets précèdent le rôle et la base dans les vagues Argo CD.
-Le chart applicatif charge `DATABASE_URL` avec `envFrom` sur chaque branche.
-Les paramètres Authentik restent chargés uniquement sur `main`.
+Le chart applicatif charge `DATABASE_URL` et les paramètres Authentik avec
+`envFrom` uniquement sur `main`.
 La base et le rôle restent conservés après suppression de l'Application.
 Les tables et les migrations restent à gérer avec le code de carte-fede.
 
-Pour une nouvelle branche, copier un dossier existant, remplacer les noms
-dans `database.yaml`, puis générer ses deux SealedSecrets avec les commandes
-ci-dessous. Le nom PostgreSQL remplace les tirets du namespace par des
-underscores. Garder des noms distincts et inférieurs à 64 caractères.
-Il faut déclarer le dossier avant de déployer cette branche.
-
-Pour recréer ou faire tourner les identifiants d'une branche, adapter
-`branch_normalized`, puis exécuter depuis la racine du dépôt :
+Pour recréer ou faire tourner les identifiants de `main`, exécuter depuis
+la racine du dépôt :
 
 ```sh
 branch_normalized=main
