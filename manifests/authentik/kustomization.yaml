@@ -9,6 +9,18 @@ resources:
   - database.yaml
   - application.yaml
   - http-route.yaml
+  - carte-fede-credentials.sealed.yaml
+  - integrations/carte-fede-main/worker
+  - provisioning-job.yaml
+
+configMapGenerator:
+  - name: authentik-blueprints
+    namespace: authentik
+    files:
+      - fede.yaml=blueprints/fede.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
 
 patches:
   - target:

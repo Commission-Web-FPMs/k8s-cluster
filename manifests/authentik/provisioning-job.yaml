@@ -1,0 +1,76 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: authentik-provisioning
+  namespace: authentik
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+spec:
+  backoffLimit: 6
+  activeDeadlineSeconds: 900
+  template:
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      containers:
+        - name: provision
+          image: ghcr.io/goauthentik/server:2026.8.2
+          command:
+            - ak
+            - shell
+            - -c
+          args:
+            - |
+              from authentik.blueprints.models import BlueprintInstance
+              from authentik.blueprints.v1.importer import Importer
+              content = BlueprintInstance(path='/blueprints/git/fede.yaml').retrieve()
+              importer = Importer.from_string(content)
+              valid, logs = importer.validate()
+              if not valid:
+                  raise RuntimeError('Validation du blueprint GitOps échouée. Consulter Authentik.')
+              if not importer.apply():
+                  raise RuntimeError('Application du blueprint GitOps échouée. Consulter Authentik.')
+              print('Blueprint GitOps appliqué avec succès.')
+          envFrom:
+            - secretRef:
+                name: authentik-secret
+          env:
+            - name: AUTHENTIK_LOG_LEVEL
+              value: warning
+            - name: AUTHENTIK_POSTGRESQL__HOST
+              value: comweb-db-rw.comweb-db.svc.cluster.local
+            - name: AUTHENTIK_POSTGRESQL__PORT
+              value: "5432"
+            - name: AUTHENTIK_POSTGRESQL__NAME
+              value: authentik
+            - name: AUTHENTIK_POSTGRESQL__USER
+              value: authentik
+            - name: AUTHENTIK_POSTGRESQL__SSLMODE
+              value: require
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 1Gi
+          volumeMounts:
+            - name: blueprints
+              mountPath: /blueprints/git
+              readOnly: true
+            - name: credentials
+              mountPath: /secrets/carte-fede
+              readOnly: true
+            - name: configuration
+              mountPath: /config/carte-fede
+              readOnly: true
+      volumes:
+        - name: blueprints
+          configMap:
+            name: authentik-blueprints
+        - name: credentials
+          secret:
+            secretName: carte-fede-credentials
+        - name: configuration
+          configMap:
+            name: authentik-config

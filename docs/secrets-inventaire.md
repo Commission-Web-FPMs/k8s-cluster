@@ -7,6 +7,8 @@
 | App GitHub ArgoCD | [github-oauth](../manifests/argocd/github-app.md) |
 | GitHub Webhook ArgoCD | [github-oauth](../manifests/argocd/github-webhook.md) |
 | Administrateur initial Authentik | [authentik-bootstrap](../manifests/authentik/authentik-bootstrap.md) |
+| Provisionnement Authentik de carte-fede main | [carte-fede-credentials](../manifests/authentik/carte-fede-credentials.md) |
+| Backend carte-fede main vers Authentik | [authentik-credentials](../manifests/projects/carte-fede/authentik-credentials-main.md) |
 
 ## Ajouter un secret
 

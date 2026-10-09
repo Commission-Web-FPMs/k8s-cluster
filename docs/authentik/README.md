@@ -29,13 +29,14 @@ Git suivant la [procédure de sauvegarde](../secrets.md).
 
 ## État de ces guides
 
-Les fichiers dans `exemples/` sont des modèles pour Authentik 2026.8.2.
-Ils ne sont pas référencés par les Kustomizations et ne sont pas déployés.
-Le raccordement à Argo CD, l'injection dans carte-fede et la validation sur
-une base neuve restent à réaliser. Les procédures ci-dessous distinguent la
-préparation des fichiers de leur activation.
+Le blueprint [fede.yaml](../../manifests/authentik/blueprints/fede.yaml) est
+référencé par Kustomize et monté dans le worker Authentik 2026.8.2. Un Job
+PostSync Argo CD valide et applique ce même fichier après la synchronisation.
+Les credentials existent sous forme de SealedSecrets pour les deux namespaces.
+Le code et le chart de carte-fede ne sont pas modifiés : l'application devra
+encore consommer les ressources préparées et implémenter son callback OIDC.
 
-Le premier environnement décrit est `carte-fede-main`. L'ApplicationSet actuel
+Le premier environnement provisionné est `carte-fede-main`. L'ApplicationSet actuel
 déploie aussi les autres branches. Chaque environnement devra disposer de
 son propre client, compte de service, token et Secret dans son namespace.
 

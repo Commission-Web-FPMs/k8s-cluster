@@ -1,98 +1,123 @@
-# Provisionner les accès de carte-fede
+# Provisionnement Authentik de carte-fede
 
-Les blueprints peuvent créer un compte de service, définir son token API et
-configurer un provider OIDC associé à une application. Les credentials sont
-générés avant le déploiement, puis scellés pour Authentik et carte-fede.
-Les deux applications consomment ainsi les mêmes valeurs après la synchro.
+Le dépôt prépare le compte de service, son token API et le client OIDC de
+`carte-fede-main`. Le code et le chart de carte-fede restent à adapter pour
+consommer ces accès. Aucun utilisateur humain n'est déclaré dans le blueprint.
 
-Ce guide prépare `carte-fede-main`. Les exemples ne sont pas encore activés
-dans les manifests et n'ont pas été exécutés sur Authentik.
+## Ressources gérées par Git
 
-## Objets à créer
-
-| Objet | Nom ou identifiant |
+| Ressource | Définition |
 | --- | --- |
-| Groupes applicatifs | `membres`, `comite`, `admin` |
-| Compte de service Authentik | `svc-carte-fede-main` |
-| Rôle API de l'exemple | `carte-fede-main-api-reader` |
-| Token API | `carte-fede-main-api` |
-| Application et slug OIDC | `carte-fede-main` |
-| Provider OIDC | `carte-fede-main-oidc` |
-| Client ID OIDC | `carte-fede-main` |
-| Secret dans `authentik` | `carte-fede-credentials` |
-| Secret dans `carte-fede-main` | `authentik-credentials` |
+| Groupes `membres`, `comite`, `admin`, rôle API, SA, token, provider, application et bindings | [Blueprint fede.yaml](../../manifests/authentik/blueprints/fede.yaml) |
+| URLs, issuer, callback, scopes et client ID | [Configuration commune](../../manifests/authentik/integrations/carte-fede-main/base/config.env) |
+| Credentials montés dans Authentik | [SealedSecret et procédure](../../manifests/authentik/carte-fede-credentials.md) |
+| Credentials préparés pour le backend | [SealedSecret et procédure](../../manifests/projects/carte-fede/authentik-credentials-main.md) |
+| Validation et application à la synchronisation | [Job PostSync](../../manifests/authentik/provisioning-job.yaml) |
 
-Le token API authentifie le backend auprès de l'API Authentik. Le client OIDC
-permet aux personnes de se connecter à carte-fede. Le secret OIDC ne remplace
-pas le token API et les deux valeurs doivent rester différentes.
+Kustomize génère la ConfigMap `authentik-config` dans les namespaces
+`authentik` et `carte-fede-main` depuis le même fichier `config.env`.
+Le worker monte sa copie sous `/config/carte-fede` et le Secret sous
+`/secrets/carte-fede`. Le blueprint utilise `!File` pour lire ces paramètres.
+La ConfigMap `authentik-blueprints` contient le fichier YAML monté par le chart.
 
-Le `ServiceAccount` Kubernetes du chart carte-fede concerne l'accès à
-Kubernetes. Il ne crée pas le compte de service Authentik.
+Les groupes et l'intégration sont dans un seul blueprint. Les références aux
+flows et scopes intégrés utilisent `metaapplyblueprint`, `!Find` et des noms
+stables. Les objets liés dans ce fichier utilisent `!KeyOf`. Aucun UUID de la
+base actuelle n'est nécessaire pour les recréer.
 
-Références : [comptes de service](https://docs.goauthentik.io/users-sources/user/account-types/service-accounts/)
-et [définition d'une clé de token par blueprint](https://docs.goauthentik.io/customize/blueprints/v1/models).
+Le Job PostSync utilise la même image 2026.8.2 et les mêmes montages. Il
+valide puis applique le blueprint et échoue si une étape échoue. Argo CD
+peut donc signaler une erreur de provisionnement, même si les Pods sont sains.
+Le worker conserve aussi sa découverte et sa réconciliation natives.
+Conserver la version de l'image du Job alignée avec le chart Authentik lors
+d'une mise à jour. Le Job reprend après un échec pendant au plus 15 minutes.
 
-## Préparer les blueprints
+Références : [blueprints](https://docs.goauthentik.io/customize/blueprints),
+[tags YAML](https://docs.goauthentik.io/customize/blueprints/v1/tags)
+et [dépendances](https://docs.goauthentik.io/customize/blueprints/v1/meta).
 
-Les exemples sont [groupes.yaml](./exemples/groupes.yaml) et
-[carte-fede.yaml](./exemples/carte-fede.yaml). À l'activation, les copier sous
-`manifests/authentik/blueprints/` et conserver ces noms d'objets pour les mises
-à jour. Aucun UUID ou ID numérique de l'installation actuelle n'est nécessaire.
+## Compte de service et autorisations
 
-Le premier fichier crée les groupes sans définir leurs membres. Le second
-crée le rôle, le compte technique, son token et le couple application/provider.
-Les entrées `metaapplyblueprint` déclarent les dépendances sur les groupes,
-les flows intégrés et les scopes système. La numérotation des fichiers ne
-garantit pas leur ordre d'application.
+Le compte `svc-carte-fede-main`, rangé sous `service-accounts/carte-fede`,
+possède le rôle `carte-fede-main-api-reader`. Ce rôle accorde une lecture
+globale des utilisateurs et groupes. Il ne permet ni leur création ni leur
+modification. Le token `carte-fede-main-api` a l'intention `api`.
 
-Le rôle d'exemple accorde une lecture globale des utilisateurs et groupes.
-Il ne permet pas de les créer, de les modifier ou de gérer leurs credentials.
-Retirer ces permissions si l'application n'a pas besoin de cet accès global.
-Pour gérer seulement certains utilisateurs, définir et tester les permissions
-sur les objets concernés avant d'ajouter des droits d'écriture. Un dossier ou
-un groupe métier ne restreint pas automatiquement une permission API globale.
+Pour permettre la gestion de certains utilisateurs, définir les objets et
+les opérations autorisés avant d'étendre les permissions. Le dossier d'un
+utilisateur ou son appartenance à un groupe ne limite pas automatiquement
+une permission API globale. Les droits d'écriture seront un changement
+séparé, testé avec des requêtes acceptées et refusées.
 
-L'accès OIDC autorise chacun des trois groupes. Le provider utilise le flow
-intégré à consentement implicite pour cette application interne, et les scopes
-`openid email profile`. Le mapping `profile` de cette version fournit le claim
-`groups`, que carte-fede devra utiliser pour ses autorisations. L'exemple ne
-demande pas de refresh token et n'accorde pas le scope d'accès à l'API Authentik.
+Les groupes applicatifs ont `is_superuser: false`. Ils ne définissent pas
+leurs membres, afin que la réconciliation préserve les personnes ajoutées
+via l'interface ou l'API. Le compte technique n'appartient à aucun de ces
+groupes et n'obtient pas d'accès OIDC interactif par leurs bindings.
 
-Avant l'activation, renseigner l'URL exacte de callback depuis la configuration
-ou le code OIDC de carte-fede. Son domaine actuel sur `main` est
-`https://carte-fede-main.web.magellan.fpms.ac.be`, mais le chemin de callback
-n'est pas défini dans ce dépôt. Ne pas inventer `/callback` ou utiliser une
-regex pour contourner cette information manquante.
+Référence : [comptes de service](https://docs.goauthentik.io/users-sources/user/account-types/service-accounts/).
 
-L'exemple suppose un backend qui conserve son secret, avec un client
-`confidential` et le grant `authorization_code`. Si le client est exécuté
-entièrement dans le navigateur, utiliser un client `public` avec PKCE et
-adapter le blueprint et les secrets consommés.
+## Contrat pour la future adaptation de carte-fede
 
-Choisir aussi une paire certificat/clé RSA de signature dans
-`System > Certificates`, par exemple le certificat auto-généré d'Authentik
-s'il existe. Son nom sera transmis au worker. Le blueprint échoue si la paire
-référencée manque ; il ne bascule pas silencieusement vers une signature avec
-le secret du client.
+Le backend pourra charger la ConfigMap `authentik-config` et le Secret
+`authentik-credentials` de son namespace avec `envFrom`.
 
-Références : [dépendances entre blueprints](https://docs.goauthentik.io/customize/blueprints/v1/meta),
-[scopes intégrés en 2026.8.2](https://github.com/goauthentik/authentik/blob/version/2026.8.2/blueprints/system/providers-oauth2.yaml)
-et [provider OAuth/OIDC](https://docs.goauthentik.io/add-secure-apps/providers/oauth2/).
+| Variable | Usage |
+| --- | --- |
+| `AUTHENTIK_API_URL` | Base interne `http://authentik-server.authentik.svc.cluster.local` ; ajouter `/api/v3/` pour les appels |
+| `AUTHENTIK_API_TOKEN` | Bearer token API du compte de service |
+| `OIDC_ISSUER_URL` | `https://auth.fede.fpms.ac.be/application/o/carte-fede-main/` |
+| `OIDC_CLIENT_ID` | `carte-fede-main` |
+| `OIDC_CLIENT_SECRET` | Secret du client confidentiel |
+| `OIDC_REDIRECT_URI` | `https://carte-fede-main.web.magellan.fpms.ac.be/api/auth/oidc/callback` |
+| `OIDC_SCOPES` | `openid email profile` |
 
-## Générer et sceller les credentials
+Le callback `/api/auth/oidc/callback` est réservé pour la future implémentation.
+Il n'existe pas dans le backend actuel. Si cette implémentation retient un
+autre chemin, modifier `config.env` ; le provider et les deux ConfigMaps
+utiliseront alors cette nouvelle valeur. Vérifier le support de `envFrom`
+dans le chart et prévoir un redémarrage des Pods après les changements de
+configuration ou de secrets chargés en environnement.
 
-Cette procédure concerne une première création. Pour un service déjà branché,
-suivre la section rotation plutôt que régénérer ses deux credentials.
+L'intégration utilise un client `confidential`, le grant `authorization_code`
+et une comparaison stricte du callback. Le secret reste dans le backend.
+La signature utilise la paire RSA `authentik Self-signed Certificate`, créée
+par l'installation Authentik. Une paire absente fait échouer le provisionnement.
+La découverte OIDC est accessible à l'URL publique :
 
-Prérequis : Python 3, `kubectl`, `kubeseal` et un accès au contrôleur Sealed
-Secrets. Exécuter ce bloc dans Bash, depuis la racine du dépôt. Il prépare
-deux fichiers scellés sans appliquer de ressource au cluster. Les fichiers
-en clair restent dans un répertoire temporaire privé, supprimé à la sortie.
+```text
+https://auth.fede.fpms.ac.be/application/o/carte-fede-main/.well-known/openid-configuration
+```
+
+Le mapping `profile` intégré transmet les groupes. Les bindings autorisent
+une personne appartenant à `membres`, `comite` ou `admin`. Carte-fede devra
+valider les tokens et appliquer ses droits métier à partir de ces claims.
+L'issuer reste public, y compris dans le backend. L'exemple ne demande pas de
+refresh token et ne donne pas le scope d'accès à l'API Authentik aux personnes.
+
+Références : [provider OIDC](https://docs.goauthentik.io/add-secure-apps/providers/oauth2/)
+et [scopes de la version 2026.8.2](https://github.com/goauthentik/authentik/blob/version/2026.8.2/blueprints/system/providers-oauth2.yaml).
+
+## Première génération des credentials
+
+Les credentials sont déjà scellés dans ce dépôt. Pour reconstruire, conserver
+ces fichiers et restaurer la clé privée du contrôleur. La procédure suivante
+sert seulement à créer une nouvelle intégration sans credentials existants.
+Elle refuse de remplacer les fichiers actuels.
+
+Avec Python 3, kubectl et kubeseal, exécuter depuis la racine dans Bash.
+Les valeurs en clair ne sont pas affichées et leur répertoire temporaire
+est supprimé à la sortie. Les deux secrets utilisent les mêmes valeurs,
+chacune scellée pour son propre nom et namespace.
 
 ```bash
 (
 set -euo pipefail
 umask 077
+if [ -e manifests/authentik/carte-fede-credentials.sealed.yaml ] || \
+   [ -e manifests/projects/carte-fede/authentik-credentials-main.sealed.yaml ]; then
+  echo 'Credentials existants : utiliser une rotation coordonnée.' >&2
+  exit 1
+fi
 credentials_dir=$(mktemp -d)
 trap 'rm -rf "$credentials_dir"' EXIT
 
@@ -129,138 +154,51 @@ mv "$credentials_dir/carte-fede.sealed.yaml" \
 )
 ```
 
-Le scellement strict lie chaque fichier à son nom et son namespace. Copier
-le ciphertext du premier dans le second ne fonctionnerait pas. Les fichiers
-sources n'ont pas de saut de ligne final afin de préserver les clés exactes.
-
-À l'activation, ajouter les SealedSecrets aux Kustomizations respectives,
-créer un guide `.md` à côté de chacun et renseigner
-[l'inventaire](../secrets-inventaire.md). Déclarer le namespace
-`carte-fede-main` dans Git pour que le secret puisse être créé avant l'application.
-
-## Raccorder Kustomize et le worker
-
-Ajouter à `manifests/authentik/kustomization.yaml` lors de l'activation :
-
-```yaml
-configMapGenerator:
-  - name: authentik-blueprints
-    namespace: authentik
-    files:
-      - groupes.yaml=blueprints/groupes.yaml
-      - carte-fede.yaml=blueprints/carte-fede.yaml
-generatorOptions:
-  disableNameSuffixHash: true
-```
-
-Le nom stable permet au chart Authentik de référencer la ConfigMap. Kustomize
-ne réécrit pas automatiquement les noms placés dans les valeurs Helm d'une
-Application Argo CD.
-
-Fusionner les valeurs suivantes dans `spec.source.helm.valuesObject` de
-l'Application Authentik. Conserver notamment le `worker.envFrom` du bootstrap.
-Remplacer les deux valeurs `A_RENSEIGNER` avant le déploiement.
-
-```yaml
-blueprints:
-  configMaps:
-    - authentik-blueprints
-worker:
-  env:
-    - name: CARTE_FEDE_OIDC_REDIRECT_URI
-      value: A_RENSEIGNER_URL_HTTPS_COMPLETE_DU_CALLBACK
-    - name: CARTE_FEDE_OIDC_SIGNING_KEY_NAME
-      value: A_RENSEIGNER_NOM_DE_LA_PAIRE_CERTIFICAT_CLE
-  volumes:
-    - name: carte-fede-credentials
-      secret:
-        secretName: carte-fede-credentials
-  volumeMounts:
-    - name: carte-fede-credentials
-      mountPath: /secrets/carte-fede
-      readOnly: true
-```
-
-Le chart monte les blueprints dans le worker. Le tag `!File` lit les clés
-dans le volume Secret distinct. Les références publiques passent ici par
-`!Env`. Un changement de ces variables nécessite un redémarrage du worker.
-
-Références : [tags des blueprints](https://docs.goauthentik.io/customize/blueprints/v1/tags)
-et [montages du chart 2026.8.2](https://github.com/goauthentik/helm/blob/authentik-2026.8.2/charts/authentik/templates/worker/deployment.yaml).
-
-## Brancher carte-fede
-
-Le chart du dépôt `Commission-Web-FPMs/carte-fede-deployment` ne consomme pas
-encore `env` ou `envFrom` dans son Deployment. Il faut ajouter ce support,
-puis fournir les références via l'ApplicationSet de ce dépôt.
-
-Le contrat proposé pour le backend est le suivant. Adapter les noms si le
-code de carte-fede emploie déjà une autre convention.
-
-| Variable | Valeur ou référence |
-| --- | --- |
-| `AUTHENTIK_API_URL` | `http://authentik-server.authentik.svc.cluster.local` |
-| `AUTHENTIK_API_TOKEN` | Secret `authentik-credentials`, clé du même nom |
-| `OIDC_ISSUER_URL` | `https://auth.fede.fpms.ac.be/application/o/carte-fede-main/` |
-| `OIDC_CLIENT_ID` | `carte-fede-main` |
-| `OIDC_CLIENT_SECRET` | Secret `authentik-credentials`, clé du même nom |
-| `OIDC_REDIRECT_URI` | Même callback complet que dans le provider |
-| `OIDC_SCOPES` | `openid email profile` |
-
-Pour l'API, ajouter `/api/v3/` et envoyer `Authorization: Bearer <token>`.
-Pour OIDC, conserver l'issuer public, y compris dans le backend. La découverte
-est disponible sur
-`https://auth.fede.fpms.ac.be/application/o/carte-fede-main/.well-known/openid-configuration`.
-Utiliser ses endpoints pour les échanges OAuth et la validation des tokens.
-
-Une ConfigMap applicative peut porter les paramètres publics et `envFrom`
-charger le Secret. Aucun credential ne doit être intégré au bundle frontend.
-La fiche YAML commune qui générera ces paramètres, les URLs et le blueprint
-reste à mettre en place. Les valeurs ci-dessus définissent son premier contrat.
-
-L'ApplicationSet utilise tous les noms de branches. Ne pas injecter le secret
-de `main` dans tous les environnements : créer une identité et un client par
-namespace, ou limiter d'abord l'intégration à `main`. La génération et le
-nettoyage automatiques des identités de branches restent à implémenter.
-
-## Contrôler l'activation
-
-Après la synchro Argo CD, vérifier les résultats dans Authentik :
-
-1. Les deux blueprints ont été appliqués sans erreur et les trois groupes
-   existent. Une nouvelle application du blueprint préserve leurs membres.
-2. Le compte technique est de type service account, avec uniquement le rôle
-   de lecture prévu. Son token a l'intention API et la clé scellée attendue.
-3. Depuis le backend, le token permet les lectures prévues. Une tentative de
-   modification d'un utilisateur échoue avec le profil de cet exemple.
-4. La découverte OIDC annonce l'issuer public attendu et une clé de signature
-   exploitable. Le callback fonctionne avec la valeur exacte configurée.
-5. Une personne appartenant à chaque groupe peut se connecter. Une personne
-   sans ces groupes est refusée. Carte-fede applique ensuite ses propres
-   droits métier selon les claims validés.
-6. Sur une base Authentik neuve de validation, les objets techniques sont
-   recréés avec les mêmes noms, client ID et credentials.
-
-La santé des Pods et les sync waves Argo CD ne prouvent pas que les objets
-Authentik existent. Prévoir un contrôle du résultat des blueprints et des
-reprises de connexion côté carte-fede pour supporter le premier démarrage.
+Le scellement strict ne permet pas de copier le ciphertext entre namespaces.
+Conserver les fichiers `.md` associés et [l'inventaire](../secrets-inventaire.md)
+à jour. Les valeurs n'ont pas de saut de ligne final.
 
 ## Rotation et suppression
 
-Le token de l'exemple est non expirant pour conserver la clé déclarée dans
-Git. Sa rotation est une opération explicite. Créer un deuxième token avec
-un nouvel identifiant et une nouvelle clé, le sceller des deux côtés, attendre
-son application dans Authentik, puis redémarrer les consommateurs sur la
-nouvelle clé. Supprimer ensuite l'ancien token avec `state: absent` dans le
-blueprint. La rotation OIDC nécessite de coordonner le provider et le backend.
+Le token est non expirant pour conserver la clé déclarée par Git. Pour le
+remplacer sans interrompre un consommateur, déclarer un deuxième token avec
+un nouvel identifiant et une nouvelle clé. Sceller la nouvelle clé pour les
+deux namespaces, attendre l'application dans Authentik, puis basculer et
+redémarrer le backend. Déclarer ensuite l'ancien token avec `state: absent`.
+La rotation du secret OIDC doit aussi coordonner le provider et le backend.
 
-Un Secret chargé par `envFrom` ne redémarre pas le Deployment lorsqu'il change.
-Le raccordement final devra déclencher ces redémarrages automatiquement.
-Un fichier Secret monté est mis à jour par Kubernetes, mais il faut aussi
-attendre la réapplication du blueprint pour que la base Authentik change.
+Ne pas changer ces credentials seulement dans l'interface Authentik : une
+réconciliation rétablirait les valeurs versionnées. Retirer une entrée ou un
+fichier ne supprime pas les objets ; déclarer leur suppression explicitement
+avant de retirer leur blueprint ou ses montages.
 
-Retirer une entrée ou un fichier ne supprime pas les objets Authentik.
-Déclarer explicitement leur suppression avant de retirer le blueprint ou
-son montage. Évaluer les dépendances avant de supprimer un groupe ou un provider.
+Les autres branches de carte-fede restent indépendantes. Chaque nouvelle
+intégration doit avoir son propre client, SA, token et Secret applicatif.
+La création automatique des identités à partir de l'ApplicationSet n'est pas
+incluse dans ce premier lot.
 
-Référence : [états des entrées de blueprint](https://docs.goauthentik.io/customize/blueprints/v1/structure).
+Référence : [états des objets](https://docs.goauthentik.io/customize/blueprints/v1/structure).
+
+## Validation avant livraison
+
+Le test [test_blueprint.py](../../manifests/authentik/tests/test_blueprint.py)
+s'exécute avec `ak shell` sur la version cible. Il reçoit un JSON contenant
+`blueprint` et `configuration`, crée des credentials de test et annule sa
+transaction. Il vérifie la création, la réapplication, la conservation des
+appartenances humaines, les permissions, le token et les paramètres OIDC.
+Il ne constitue pas un test de connexion de carte-fede, encore à adapter.
+
+Depuis la racine, avec Python 3 et un accès kubectl au worker :
+
+```sh
+python3 manifests/authentik/tests/run.py
+```
+
+Le lanceur vérifie aussi le rendu Kustomize et l'identité des deux configurations
+publiques. Les credentials de validation sont temporaires et ne remplacent
+pas les valeurs scellées.
+
+Le rendu des manifests peut être vérifié avec `kubectl kustomize manifests`.
+Une restauration complète doit aussi tester les dépendances sur une base
+neuve, avec la sauvegarde de la clé Sealed Secrets. Les utilisateurs humains
+et leurs credentials restent des données PostgreSQL à sauvegarder.

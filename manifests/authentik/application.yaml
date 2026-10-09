@@ -29,6 +29,24 @@ spec:
           envFrom:
             - secretRef:
                 name: authentik-bootstrap
+          volumes:
+            - name: carte-fede-credentials
+              secret:
+                secretName: carte-fede-credentials
+            - name: carte-fede-config
+              configMap:
+                name: authentik-config
+          volumeMounts:
+            - name: carte-fede-credentials
+              mountPath: /secrets/carte-fede
+              readOnly: true
+            - name: carte-fede-config
+              mountPath: /config/carte-fede
+              readOnly: true
+
+        blueprints:
+          configMaps:
+            - authentik-blueprints
 
         global:
           env:

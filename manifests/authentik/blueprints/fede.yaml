@@ -1,14 +1,26 @@
-# Exemple documentaire, non monté par le worker.
-# Nécessite les deux fichiers Secret et l'URL de callback réelle.
 version: 1
 metadata:
-  name: Fede - Carte-fede main
+  name: Fede - Configuration GitOps
 entries:
-  - model: authentik_blueprints.metaapplyblueprint
+  - model: authentik_core.group
+    state: present
+    identifiers:
+      name: membres
     attrs:
-      identifiers:
-        name: Fede - Groupes
-      required: true
+      is_superuser: false
+  - model: authentik_core.group
+    state: present
+    identifiers:
+      name: comite
+    attrs:
+      is_superuser: false
+  - model: authentik_core.group
+    state: present
+    identifiers:
+      name: admin
+    attrs:
+      is_superuser: false
+
   - model: authentik_blueprints.metaapplyblueprint
     attrs:
       identifiers:
@@ -67,7 +79,7 @@ entries:
     identifiers:
       name: carte-fede-main-oidc
     attrs:
-      client_id: carte-fede-main
+      client_id: !File /config/carte-fede/OIDC_CLIENT_ID
       client_type: confidential
       client_secret: !File /secrets/carte-fede/OIDC_CLIENT_SECRET
       grant_types:
@@ -76,9 +88,9 @@ entries:
       invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
       redirect_uris:
         - matching_mode: strict
-          url: !Env CARTE_FEDE_OIDC_REDIRECT_URI
+          url: !File /config/carte-fede/OIDC_REDIRECT_URI
       issuer_mode: per_provider
-      signing_key: !Find [authentik_crypto.certificatekeypair, [name, !Env CARTE_FEDE_OIDC_SIGNING_KEY_NAME]]
+      signing_key: !Find [authentik_crypto.certificatekeypair, [name, !File /config/carte-fede/OIDC_SIGNING_KEY_NAME]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-openid]]
         - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-email]]
@@ -87,11 +99,11 @@ entries:
     state: present
     id: application
     identifiers:
-      slug: carte-fede-main
+      slug: !File /config/carte-fede/OIDC_APP_SLUG
     attrs:
       name: Carte-fede main
       provider: !KeyOf oidc-provider
-      meta_launch_url: https://carte-fede-main.web.magellan.fpms.ac.be
+      meta_launch_url: !File /config/carte-fede/OIDC_APP_BASE_URL
       policy_engine_mode: any
 
   # Accès OIDC pour chacun des trois groupes. Le SA n'en fait pas partie.
