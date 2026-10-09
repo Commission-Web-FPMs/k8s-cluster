@@ -27,4 +27,7 @@ resources:
   # qu'il pilote.
   - cnpg/
 
+  # Authentik : fournisseur d'identité, avec sa base dans le cluster CNPG.
+  - authentik/
+
   - projects/

@@ -1,0 +1,30 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - namespace.yaml
+  - authentik-secret.sealed.yaml
+  - authentik-db-credentials.sealed.yaml
+  - database.yaml
+  - application.yaml
+
+patches:
+  - target:
+      group: bitnami.com
+      kind: SealedSecret
+    patch: |
+      apiVersion: bitnami.com/v1alpha1
+      kind: SealedSecret
+      metadata:
+        name: ignore
+        annotations:
+          argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+  - target:
+      group: postgresql.cnpg.io
+    patch: |
+      apiVersion: postgresql.cnpg.io/v1
+      kind: ignore
+      metadata:
+        name: ignore
+        annotations:
+          argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true

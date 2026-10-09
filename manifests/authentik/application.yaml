@@ -1,0 +1,55 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: authentik
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+
+spec:
+  project: default
+
+  source:
+    repoURL: https://charts.goauthentik.io
+    chart: authentik
+    targetRevision: 2026.8.2
+
+    helm:
+      valuesObject:
+        # Secret applicatif authentik.
+        #
+        # Le Secret doit notamment contenir :
+        #   AUTHENTIK_SECRET_KEY: <secret généré>
+        #   AUTHENTIK_POSTGRESQL__PASSWORD: <mot de passe CNPG>
+        authentik:
+          existingSecret:
+            secretName: authentik-secret
+
+        global:
+          env:
+            - name: AUTHENTIK_POSTGRESQL__HOST
+              value: comweb-db-rw.comweb-db.svc.cluster.local
+            - name: AUTHENTIK_POSTGRESQL__PORT
+              value: "5432"
+            - name: AUTHENTIK_POSTGRESQL__NAME
+              value: authentik
+            - name: AUTHENTIK_POSTGRESQL__USER
+              value: authentik
+            - name: AUTHENTIK_POSTGRESQL__SSLMODE
+              value: require
+
+        # On utilise CNPG, pas le PostgreSQL embarqué
+        # dans le chart authentik.
+        postgresql:
+          enabled: false
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: authentik
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
