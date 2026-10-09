@@ -4,6 +4,7 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - authentik-secret.sealed.yaml
+  - authentik-bootstrap.sealed.yaml
   - authentik-db-credentials.sealed.yaml
   - database.yaml
   - application.yaml

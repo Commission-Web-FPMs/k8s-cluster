@@ -6,6 +6,7 @@
 | Connexion GitHub d'ArgoCD | [github-oauth](../manifests/argocd/github-oauth.md) |
 | App GitHub ArgoCD | [github-oauth](../manifests/argocd/github-app.md) |
 | GitHub Webhook ArgoCD | [github-oauth](../manifests/argocd/github-webhook.md) |
+| Administrateur initial Authentik | [authentik-bootstrap](../manifests/authentik/authentik-bootstrap.md) |
 
 ## Ajouter un secret
 

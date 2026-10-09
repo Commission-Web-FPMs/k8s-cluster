@@ -25,6 +25,11 @@ spec:
           existingSecret:
             secretName: authentik-secret
 
+        worker:
+          envFrom:
+            - secretRef:
+                name: authentik-bootstrap
+
         global:
           env:
             - name: AUTHENTIK_POSTGRESQL__HOST
