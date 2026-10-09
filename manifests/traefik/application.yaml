@@ -16,6 +16,14 @@ spec:
         deployment:
           kind: DaemonSet
 
+        # OpenResty termine TLS et contacte Traefik depuis 172.17.0.1.
+        # Conserver le schéma HTTPS et l'adresse du client qu'il transmet.
+        ports:
+          web:
+            forwardedHeaders:
+              trustedIPs:
+                - 172.17.0.1/32
+
         providers:
           kubernetesIngress:
             enabled: false
