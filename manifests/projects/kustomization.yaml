@@ -3,3 +3,4 @@ kind: Kustomization
 
 resources:
   - site-fede/
+  - carte-fede/
