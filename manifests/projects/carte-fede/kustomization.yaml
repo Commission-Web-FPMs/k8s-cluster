@@ -29,3 +29,27 @@ patches:
         name: ignore
         annotations:
           argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+  - target:
+      group: postgresql.cnpg.io
+      kind: Database
+      name: carte-fede-main
+      namespace: comweb-db
+    patch: |
+      apiVersion: postgresql.cnpg.io/v1
+      kind: Database
+      metadata:
+        name: carte-fede-main
+        annotations:
+          argocd.argoproj.io/sync-options: Prune=false,Delete=false,SkipDryRunOnMissingResource=true
+  - target:
+      group: postgresql.cnpg.io
+      kind: DatabaseRole
+      name: carte-fede-main
+      namespace: comweb-db
+    patch: |
+      apiVersion: postgresql.cnpg.io/v1
+      kind: DatabaseRole
+      metadata:
+        name: carte-fede-main
+        annotations:
+          argocd.argoproj.io/sync-options: Prune=false,Delete=false,SkipDryRunOnMissingResource=true
