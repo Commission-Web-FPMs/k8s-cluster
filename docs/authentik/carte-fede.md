@@ -8,7 +8,7 @@ consommer ces accès. Aucun utilisateur humain n'est déclaré dans le blueprint
 
 | Ressource | Définition |
 | --- | --- |
-| Groupes `membres`, `comite`, `admin`, `par défaut`, rôle API, SA, token, provider, application et bindings | [Blueprint fede.yaml](../../manifests/authentik/blueprints/fede.yaml) |
+| Groupes `membres`, `comite`, `admin`, `default`, rôle API, SA, token, provider, application et bindings | [Blueprint fede.yaml](../../manifests/authentik/blueprints/fede.yaml) |
 | URLs, issuer, callback, scopes et client ID | [Configuration commune](../../manifests/authentik/integrations/carte-fede-main/base/config.env) |
 | Credentials montés dans Authentik | [SealedSecret et procédure](../../manifests/authentik/carte-fede-credentials.md) |
 | Credentials préparés pour le backend | [SealedSecret et procédure](../../manifests/projects/carte-fede/authentik-credentials-main.md) |
@@ -23,7 +23,9 @@ La ConfigMap `authentik-blueprints` contient le fichier YAML monté par le chart
 Les groupes et l'intégration sont dans un seul blueprint. Les références aux
 flows et scopes intégrés utilisent `metaapplyblueprint`, `!Find` et des noms
 stables. Les objets liés dans ce fichier utilisent `!KeyOf`. Aucun UUID de la
-base actuelle n'est nécessaire pour les recréer.
+base actuelle n'est nécessaire pour les autres objets. Le groupe `default`
+conserve un UUID versionné pour permettre son renommage sans perdre ses membres
+ou recréer un deuxième groupe. Cet UUID sert aussi lors d'une reconstruction.
 
 Le Job PostSync utilise la même image 2026.8.2 et les mêmes montages. Il
 valide puis applique le blueprint et échoue si une étape échoue. Argo CD
@@ -89,7 +91,7 @@ https://auth.fede.fpms.ac.be/application/o/carte-fede-main/.well-known/openid-co
 ```
 
 Le mapping `profile` intégré transmet les groupes. Les bindings autorisent
-une personne appartenant à `par défaut`, `membres`, `comite` ou `admin`. Carte-fede devra
+une personne appartenant à `default`, `membres`, `comite` ou `admin`. Carte-fede devra
 valider les tokens et appliquer ses droits métier à partir de ces claims.
 L'issuer reste public, y compris dans le backend. L'exemple ne demande pas de
 refresh token et ne donne pas le scope d'accès à l'API Authentik aux personnes.

@@ -23,8 +23,9 @@ entries:
   - model: authentik_core.group
     state: present
     identifiers:
-      name: "par défaut"
+      pk: 0111dc9f-cb7b-42a7-807b-1a477e7d0bf9
     attrs:
+      name: default
       is_superuser: false
 
   - model: authentik_blueprints.metaapplyblueprint
@@ -140,4 +141,4 @@ entries:
       target: !KeyOf application
       order: 3
     attrs:
-      group: !Find [authentik_core.group, [name, "par défaut"]]
+      group: !Find [authentik_core.group, [name, "default"]]

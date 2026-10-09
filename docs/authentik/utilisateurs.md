@@ -13,8 +13,8 @@ Avec un compte autorisé à gérer les utilisateurs, ouvrir
 2. Renseigner un username stable et unique, le nom et l'email. Utiliser
    `users/fede` comme dossier pour les personnes de la Fédération.
 3. Créer le compte actif. Ouvrir sa fiche, puis l'onglet `Groups` pour
-   ajouter les groupes existants nécessaires : `par défaut`, `membres`,
-   `comite`, `admin`. Le groupe `par défaut` autorise la connexion à carte-fede
+   ajouter les groupes existants nécessaires : `default`, `membres`,
+   `comite`, `admin`. Le groupe `default` autorise la connexion à carte-fede
    sans attribuer de rôle métier particulier.
 4. Utiliser `Reset password` pour définir un mot de passe initial unique.
    Le transmettre par un canal privé. La personne peut ensuite le changer

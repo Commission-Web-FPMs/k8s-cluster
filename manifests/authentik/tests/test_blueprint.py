@@ -70,6 +70,7 @@ check(
 )
 baseline = [model.objects.count() for model in (User, Group, Token, OAuth2Provider, Application)]
 service_account_exists = User.objects.filter(username="svc-carte-fede-main").exists()
+previous_default = Group.objects.filter(name__in=["par défaut", "default"]).first()
 
 with tempfile.TemporaryDirectory(prefix="authentik-blueprint-test-") as directory:
     root = Path(directory)
@@ -83,17 +84,23 @@ with tempfile.TemporaryDirectory(prefix="authentik-blueprint-test-") as director
     source = source.replace("/config/carte-fede/", directory + "/")
 
     with transaction.atomic():
+        person = User.objects.create(
+            username="gitops-test-" + secrets.token_hex(8), type="internal"
+        )
+        if previous_default:
+            person.groups.add(previous_default)
         importer = Importer.from_string(source)
         valid, logs = importer.validate()
         check(valid, "Le blueprint est invalide")
         check(importer.apply(), "La première application a échoué")
 
-        person = User.objects.create(
-            username="gitops-test-" + secrets.token_hex(8), type="internal"
-        )
-        person.groups.add(Group.objects.get(name="par défaut"))
+        default_group = Group.objects.get(name="default")
+        if previous_default:
+            check(default_group.pk == previous_default.pk, "Le groupe a été recréé au lieu d'être renommé")
+        else:
+            person.groups.add(default_group)
         check(importer.apply(), "La seconde application a échoué")
-        check(person.groups.filter(name="par défaut").exists(), "Une appartenance humaine a été perdue")
+        check(person.groups.filter(name="default").exists(), "Une appartenance humaine a été perdue")
         check(
             User.objects.count() == baseline[0] + 1 + int(not service_account_exists),
             "Création inattendue d'utilisateurs",
@@ -131,10 +138,10 @@ with tempfile.TemporaryDirectory(prefix="authentik-blueprint-test-") as director
         bindings = PolicyBinding.objects.filter(target=application)
         check(application.policy_engine_mode == "any", "Accès aux groupes non alternatif")
         check(
-            set(bindings.values_list("group__name", flat=True)) == {"membres", "comite", "admin", "par défaut"},
+            set(bindings.values_list("group__name", flat=True)) == {"membres", "comite", "admin", "default"},
             "Bindings de groupes incorrects",
         )
-        check(not Group.objects.filter(name__in=["membres", "comite", "admin", "par défaut"], is_superuser=True).exists(), "Groupe applicatif superuser")
+        check(not Group.objects.filter(name__in=["membres", "comite", "admin", "default"], is_superuser=True).exists(), "Groupe applicatif superuser")
         transaction.set_rollback(True)
 
 check(

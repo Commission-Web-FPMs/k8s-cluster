@@ -13,7 +13,7 @@ décrivent la gestion des personnes et le provisionnement des accès de carte-fe
 | Données | Source de vérité |
 | --- | --- |
 | Utilisateurs humains, mots de passe, MFA, appartenances aux groupes | Authentik, via son interface ou l'API |
-| Groupes `membres`, `comite`, `admin`, `par défaut` | Blueprints versionnés |
+| Groupes `membres`, `comite`, `admin`, `default` | Blueprints versionnés |
 | Comptes de service, permissions, définition des tokens | Blueprints versionnés |
 | Applications et providers OIDC, URLs et client IDs | Configuration versionnée |
 | Clés des tokens API et secrets des clients OIDC | SealedSecrets versionnés |
@@ -47,7 +47,7 @@ son propre client, compte de service, token et Secret dans son namespace.
 | `membres` | Accès membre |
 | `comite` | Fonctions du comité |
 | `admin` | Administration de l'application |
-| `par défaut` | Connexion à carte-fede sans rôle métier particulier |
+| `default` | Connexion à carte-fede sans rôle métier particulier |
 
 Ces groupes sont indépendants, sans hiérarchie implicite. Une personne peut
 appartenir à plusieurs groupes. Le code de carte-fede doit interpréter ces
@@ -58,5 +58,5 @@ quatre groupes ont `is_superuser: false` et aucun rôle d'administration associ�
 L'administration de l'identité reste un accès distinct de l'administration
 de l'application.
 
-Le nom `par défaut` ne provoque pas d'affectation automatique. Ajouter les
+Le nom `default` ne provoque pas d'affectation automatique. Ajouter les
 personnes à ce groupe via l'interface ou l'API, comme pour les autres groupes.
