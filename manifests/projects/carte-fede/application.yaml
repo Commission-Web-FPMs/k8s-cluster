@@ -44,6 +44,30 @@ spec:
         helm:
           values: |
             {{- if eq .branch "main" }}
+            replicaCount: 0
+            frontend:
+              replicaCount: 0
+            env:
+              - name: AUTO_CREATE_DB
+                value: "0"
+              - name: SESSION_COOKIE_SECURE
+                value: "true"
+              - name: REMEMBER_COOKIE_SECURE
+                value: "true"
+              - name: PROXY_FIX_X_FOR
+                value: "1"
+              - name: PROXY_FIX_X_PROTO
+                value: "1"
+              - name: PROXY_FIX_X_HOST
+                value: "1"
+              - name: PROXY_FIX_X_PORT
+                value: "0"
+              - name: PROXY_FIX_X_PREFIX
+                value: "0"
+              - name: FRONTEND_BASE_URL
+                value: "https://carte-fede-main.web.magellan.fpms.ac.be"
+              - name: GUNICORN_CMD_ARGS
+                value: "--access-logformat='%(m)s %(s)s %(L)s'"
             envFrom:
               - secretRef:
                   name: postgresql-credentials
