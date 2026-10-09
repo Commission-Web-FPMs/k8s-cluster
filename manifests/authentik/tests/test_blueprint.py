@@ -91,9 +91,9 @@ with tempfile.TemporaryDirectory(prefix="authentik-blueprint-test-") as director
         person = User.objects.create(
             username="gitops-test-" + secrets.token_hex(8), type="internal"
         )
-        person.groups.add(Group.objects.get(name="membres"))
+        person.groups.add(Group.objects.get(name="par défaut"))
         check(importer.apply(), "La seconde application a échoué")
-        check(person.groups.filter(name="membres").exists(), "Une appartenance humaine a été perdue")
+        check(person.groups.filter(name="par défaut").exists(), "Une appartenance humaine a été perdue")
         check(
             User.objects.count() == baseline[0] + 1 + int(not service_account_exists),
             "Création inattendue d'utilisateurs",
@@ -131,10 +131,10 @@ with tempfile.TemporaryDirectory(prefix="authentik-blueprint-test-") as director
         bindings = PolicyBinding.objects.filter(target=application)
         check(application.policy_engine_mode == "any", "Accès aux groupes non alternatif")
         check(
-            set(bindings.values_list("group__name", flat=True)) == {"membres", "comite", "admin"},
+            set(bindings.values_list("group__name", flat=True)) == {"membres", "comite", "admin", "par défaut"},
             "Bindings de groupes incorrects",
         )
-        check(not Group.objects.filter(name__in=["membres", "comite", "admin"], is_superuser=True).exists(), "Groupe applicatif superuser")
+        check(not Group.objects.filter(name__in=["membres", "comite", "admin", "par défaut"], is_superuser=True).exists(), "Groupe applicatif superuser")
         transaction.set_rollback(True)
 
 check(

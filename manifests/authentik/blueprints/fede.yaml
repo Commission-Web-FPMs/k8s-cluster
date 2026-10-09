@@ -20,6 +20,12 @@ entries:
       name: admin
     attrs:
       is_superuser: false
+  - model: authentik_core.group
+    state: present
+    identifiers:
+      name: "par défaut"
+    attrs:
+      is_superuser: false
 
   - model: authentik_blueprints.metaapplyblueprint
     attrs:
@@ -106,7 +112,7 @@ entries:
       meta_launch_url: !File /config/carte-fede/OIDC_APP_BASE_URL
       policy_engine_mode: any
 
-  # Accès OIDC pour chacun des trois groupes. Le SA n'en fait pas partie.
+  # Accès OIDC pour chacun des groupes applicatifs. Le SA n'en fait pas partie.
   - model: authentik_policies.policybinding
     state: present
     identifiers:
@@ -128,3 +134,10 @@ entries:
       order: 2
     attrs:
       group: !Find [authentik_core.group, [name, admin]]
+  - model: authentik_policies.policybinding
+    state: present
+    identifiers:
+      target: !KeyOf application
+      order: 3
+    attrs:
+      group: !Find [authentik_core.group, [name, "par défaut"]]

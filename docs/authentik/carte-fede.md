@@ -8,7 +8,7 @@ consommer ces accès. Aucun utilisateur humain n'est déclaré dans le blueprint
 
 | Ressource | Définition |
 | --- | --- |
-| Groupes `membres`, `comite`, `admin`, rôle API, SA, token, provider, application et bindings | [Blueprint fede.yaml](../../manifests/authentik/blueprints/fede.yaml) |
+| Groupes `membres`, `comite`, `admin`, `par défaut`, rôle API, SA, token, provider, application et bindings | [Blueprint fede.yaml](../../manifests/authentik/blueprints/fede.yaml) |
 | URLs, issuer, callback, scopes et client ID | [Configuration commune](../../manifests/authentik/integrations/carte-fede-main/base/config.env) |
 | Credentials montés dans Authentik | [SealedSecret et procédure](../../manifests/authentik/carte-fede-credentials.md) |
 | Credentials préparés pour le backend | [SealedSecret et procédure](../../manifests/projects/carte-fede/authentik-credentials-main.md) |
@@ -89,7 +89,7 @@ https://auth.fede.fpms.ac.be/application/o/carte-fede-main/.well-known/openid-co
 ```
 
 Le mapping `profile` intégré transmet les groupes. Les bindings autorisent
-une personne appartenant à `membres`, `comite` ou `admin`. Carte-fede devra
+une personne appartenant à `par défaut`, `membres`, `comite` ou `admin`. Carte-fede devra
 valider les tokens et appliquer ses droits métier à partir de ces claims.
 L'issuer reste public, y compris dans le backend. L'exemple ne demande pas de
 refresh token et ne donne pas le scope d'accès à l'API Authentik aux personnes.
