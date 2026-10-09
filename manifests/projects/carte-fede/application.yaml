@@ -32,8 +32,8 @@ spec:
     spec:
       project: default
 
-      source:
-        repoURL: https://github.com/Commission-Web-FPMs/carte-fede-deployment.git
+      sources:
+      - repoURL: https://github.com/Commission-Web-FPMs/carte-fede-deployment.git
 
         # Chaque Application suit sa propre branche.
         targetRevision: '{{ .branch }}'
@@ -42,6 +42,16 @@ spec:
         path: .
 
         helm:
+          values: |
+            envFrom:
+              - secretRef:
+                  name: postgresql-credentials
+            {{- if eq .branch "main" }}
+              - configMapRef:
+                  name: authentik-config
+              - secretRef:
+                  name: authentik-credentials
+            {{- end }}
           valuesObject:
             httpRoute:
               hostnames:
@@ -60,6 +70,10 @@ spec:
                         type: PathPrefix
                         value: /
 
+      - repoURL: https://github.com/Commission-Web-FPMs/k8s-cluster.git
+        targetRevision: main
+        path: 'manifests/projects/carte-fede/database/{{ .branchNormalized }}'
+
       destination:
         server: https://kubernetes.default.svc
         namespace: 'carte-fede-{{ .branchNormalized }}'
@@ -71,3 +85,4 @@ spec:
 
         syncOptions:
           - CreateNamespace=true
+          - SkipDryRunOnMissingResource=true

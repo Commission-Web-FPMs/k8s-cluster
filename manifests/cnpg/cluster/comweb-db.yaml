@@ -61,6 +61,13 @@ spec:
   # ce qui suppose quelqu'un pour la faire.
   primaryUpdateStrategy: unsupervised
 
+  postgresql:
+    pg_hba:
+      # Chaque compte carte-fede accède uniquement à sa base homonyme, en TLS.
+      # Le refus doit précéder la règle générale ajoutée par CloudNativePG.
+      - hostssl sameuser /^carte_fede_.*$ all scram-sha-256
+      - host all /^carte_fede_.*$ all reject
+
   storage:
     storageClass: postgres-local
     # Rappel : cette taille n'est pas appliquée par le provisioner local, elle

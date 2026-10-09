@@ -1,0 +1,34 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: DatabaseRole
+metadata:
+  name: carte-fede-codex-frontend-backend-http-routes
+  namespace: comweb-db
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  cluster:
+    name: comweb-db
+  name: carte_fede_codex_frontend_backend_http_routes
+  login: true
+  superuser: false
+  createdb: false
+  createrole: false
+  replication: false
+  bypassrls: false
+  databaseRoleReclaimPolicy: retain
+  passwordSecret:
+    name: carte-fede-codex-frontend-backend-http-routes-db-credentials
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: carte-fede-codex-frontend-backend-http-routes
+  namespace: comweb-db
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  cluster:
+    name: comweb-db
+  name: carte_fede_codex_frontend_backend_http_routes
+  owner: carte_fede_codex_frontend_backend_http_routes
+  databaseReclaimPolicy: retain
