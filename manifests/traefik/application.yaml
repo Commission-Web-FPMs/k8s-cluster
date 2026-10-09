@@ -29,7 +29,11 @@ spec:
             enabled: false
 
           kubernetesCRD:
-            enabled: false
+            enabled: true
+            namespaces:
+              - carte-fede-main
+            allowCrossNamespace: false
+            allowExternalNameServices: false
 
           kubernetesGateway:
             enabled: true
