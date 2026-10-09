@@ -10,6 +10,7 @@
 | Provisionnement Authentik de carte-fede main | [carte-fede-credentials](../manifests/authentik/carte-fede-credentials.md) |
 | Backend carte-fede main vers Authentik | [authentik-credentials](../manifests/projects/carte-fede/authentik-credentials-main.md) |
 | PostgreSQL de carte-fede main | [postgresql-credentials](../manifests/projects/carte-fede/postgresql-credentials.md) |
+| Signature des sessions de carte-fede main | [backend-credentials](../manifests/projects/carte-fede/backend-credentials-main.md) |
 
 ## Ajouter un secret
 

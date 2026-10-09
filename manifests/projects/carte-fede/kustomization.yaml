@@ -4,6 +4,7 @@ kind: Kustomization
 resources:
   - application.yaml
   - namespace-main.yaml
+  - backend-credentials-main.sealed.yaml
   - authentik-credentials-main.sealed.yaml
   - database/main
   - ../../authentik/integrations/carte-fede-main/application

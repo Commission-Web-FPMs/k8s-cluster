@@ -47,6 +47,8 @@ spec:
             envFrom:
               - secretRef:
                   name: postgresql-credentials
+              - secretRef:
+                  name: carte-fede-backend-credentials
               - configMapRef:
                   name: authentik-config
               - secretRef:
