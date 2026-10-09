@@ -1,0 +1,23 @@
+# Exemple documentaire, non monté par le worker.
+version: 1
+metadata:
+  name: Fede - Groupes
+entries:
+  - model: authentik_core.group
+    state: present
+    identifiers:
+      name: membres
+    attrs:
+      is_superuser: false
+  - model: authentik_core.group
+    state: present
+    identifiers:
+      name: comite
+    attrs:
+      is_superuser: false
+  - model: authentik_core.group
+    state: present
+    identifiers:
+      name: admin
+    attrs:
+      is_superuser: false
