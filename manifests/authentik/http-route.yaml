@@ -13,7 +13,7 @@ spec:
       sectionName: http
 
   hostnames:
-    - authentik.web.magellan.fpms.ac.be
+    - auth.fede.fpms.ac.be
 
   rules:
     - matches:
