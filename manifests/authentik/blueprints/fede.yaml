@@ -44,8 +44,7 @@ entries:
         name: System - OAuth2 Provider - Scopes
       required: true
 
-  # Profil d'exemple : lecture globale des utilisateurs et groupes.
-  # Aucun droit de création, modification, suppression ou gestion des tokens.
+  # Lecture globale des utilisateurs et groupes.
   - model: authentik_rbac.role
     state: present
     id: api-reader
@@ -55,6 +54,16 @@ entries:
       permissions:
         - authentik_core.view_user
         - authentik_core.view_group
+  # Écriture sur les utilisateurs, sans suppression ni administration RBAC.
+  - model: authentik_rbac.role
+    state: present
+    id: api-user-manager
+    identifiers:
+      name: carte-fede-main-api-user-manager
+    attrs:
+      permissions:
+        - authentik_core.add_user
+        - authentik_core.change_user
   - model: authentik_core.user
     state: present
     id: service-account
@@ -68,6 +77,7 @@ entries:
       groups: []
       roles:
         - !KeyOf api-reader
+        - !KeyOf api-user-manager
       permissions: []
   - model: authentik_core.token
     state: present

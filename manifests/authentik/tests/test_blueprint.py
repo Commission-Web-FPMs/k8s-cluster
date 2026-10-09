@@ -110,8 +110,17 @@ with tempfile.TemporaryDirectory(prefix="authentik-blueprint-test-") as director
         check(user.type == "service_account", "Type de compte incorrect")
         check(user.groups.count() == 0 and not user.is_superuser, "Le compte technique est privilégié")
         check(user.has_perm("authentik_core.view_user"), "Permission de lecture absente")
-        check(not user.has_perm("authentik_core.change_user"), "Permission d'écriture inattendue")
-        check(not user.has_perm("authentik_core.add_user"), "Permission de création inattendue")
+        check(user.has_perm("authentik_core.change_user"), "Permission d'écriture absente")
+        check(user.has_perm("authentik_core.add_user"), "Permission de création absente")
+        for permission in (
+            "authentik_core.delete_user",
+            "authentik_core.add_group",
+            "authentik_core.change_group",
+            "authentik_core.enable_group_superuser",
+            "authentik_rbac.change_role",
+            "authentik_core.add_token",
+        ):
+            check(not user.has_perm(permission), "Permission inattendue : " + permission)
         token = Token.objects.get(identifier="carte-fede-main-api")
         check(token.user_id == user.pk and token.intent == "api", "Token lié au mauvais compte")
         check(token.key == credentials["AUTHENTIK_API_TOKEN"], "Clé du token différente")

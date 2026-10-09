@@ -41,15 +41,18 @@ et [dépendances](https://docs.goauthentik.io/customize/blueprints/v1/meta).
 ## Compte de service et autorisations
 
 Le compte `svc-carte-fede-main`, rangé sous `service-accounts/carte-fede`,
-possède le rôle `carte-fede-main-api-reader`. Ce rôle accorde une lecture
-globale des utilisateurs et groupes. Il ne permet ni leur création ni leur
-modification. Le token `carte-fede-main-api` a l'intention `api`.
+possède les rôles `carte-fede-main-api-reader` et
+`carte-fede-main-api-user-manager`. Le premier accorde une lecture globale
+des utilisateurs et groupes. Le second permet de créer et modifier les
+utilisateurs avec `authentik_core.add_user` et `authentik_core.change_user`.
+Le token `carte-fede-main-api` a l'intention `api`.
 
-Pour permettre la gestion de certains utilisateurs, définir les objets et
-les opérations autorisés avant d'étendre les permissions. Le dossier d'un
-utilisateur ou son appartenance à un groupe ne limite pas automatiquement
-une permission API globale. Les droits d'écriture seront un changement
-séparé, testé avec des requêtes acceptées et refusées.
+Ces permissions d'écriture sont globales, sans restriction au dossier
+`users/fede` ou à un groupe métier. La modification d'un utilisateur peut
+inclure son appartenance aux groupes non superuser. Aucun droit de suppression,
+de modification des groupes, d'attribution de rôles, de passage en superuser
+ou de création de tokens n'est accordé. Une restriction future à certains
+utilisateurs nécessite des permissions sur les objets concernés.
 
 Les groupes applicatifs ont `is_superuser: false`. Ils ne définissent pas
 leurs membres, afin que la réconciliation préserve les personnes ajoutées
