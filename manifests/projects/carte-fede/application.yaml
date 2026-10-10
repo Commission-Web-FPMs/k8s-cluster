@@ -44,10 +44,12 @@ spec:
         helm:
           values: |
             {{- if eq .branch "main" }}
-            replicaCount: 0
+            replicaCount: 1
             frontend:
-              replicaCount: 0
+              replicaCount: 1
             env:
+              - name: PGOPTIONS
+                value: "-c default_transaction_read_only=on"
               - name: AUTO_CREATE_DB
                 value: "0"
               - name: SESSION_COOKIE_SECURE
@@ -55,7 +57,7 @@ spec:
               - name: REMEMBER_COOKIE_SECURE
                 value: "true"
               - name: PROXY_FIX_X_FOR
-                value: "1"
+                value: "2"
               - name: PROXY_FIX_X_PROTO
                 value: "1"
               - name: PROXY_FIX_X_HOST
@@ -78,20 +80,9 @@ spec:
               - secretRef:
                   name: authentik-credentials
             {{- end }}
-            {{- if eq .branch "main" }}
-            rateLimit:
-              sourceCriterion:
-                ipStrategy:
-                  depth: 1
-            {{- end }}
             httpRoute:
               {{- if eq .branch "main" }}
-              filters:
-                - type: ExtensionRef
-                  extensionRef:
-                    group: traefik.io
-                    kind: Middleware
-                    name: carte-fede-npm-only
+              enabled: false
               {{- end }}
               hostnames:
                 # Il y a pas encore le hostname *.k8s-dev.magellan.fpms.ac.be

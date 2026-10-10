@@ -5,6 +5,7 @@ resources:
   - application.yaml
   - namespace-main.yaml
   - npm-only.middleware.yaml
+  - access.networkpolicy.yaml
   - backend-credentials-main.sealed.yaml
   - authentik-credentials-main.sealed.yaml
   - database/main
