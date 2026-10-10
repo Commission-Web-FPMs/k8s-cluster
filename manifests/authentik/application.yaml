@@ -55,6 +55,15 @@ spec:
               readOnly: true
 
         worker:
+          # Real exec probes can exceed 3 seconds during CPU contention.
+          livenessProbe:
+            timeoutSeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            timeoutSeconds: 10
+            periodSeconds: 30
+          startupProbe:
+            timeoutSeconds: 10
           podAnnotations:
             carte-fede.fpms.ac.be/scrypt-settings-sha256: "660e1d023fee18b1b3d2964e5c0e7cacce1e5102d606d6c362b7f7936279dcc6"
           deploymentStrategy:

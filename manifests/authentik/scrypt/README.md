@@ -60,3 +60,5 @@ approval mapping must establish that new UUID before activation in membres.
 Before OIDC, reconcile source password changes and new/deleted/approved identities;
 never overwrite an Authentik-native password change without resolving the conflict.
 Business ADMIN/VERIFIER/MEMBER roles and cards remain exclusively in PostgreSQL.
+
+Worker probe validation, 11 October 2026: real isolated `ak healthcheck` probes, timeout 10 seconds / period 30 seconds, failure threshold 3 unchanged. Server retains HTTP health probes. Eight native login flows (four concurrent) passed, no OOM or new restart; server cgroup peak about 960 MiB under a 1 GiB limit. This is bounded validation, not capacity approval for opening OIDC to all members. Cold isolated startup took several minutes; startup probe retains 60 attempts.
