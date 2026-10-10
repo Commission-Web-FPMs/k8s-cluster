@@ -48,8 +48,6 @@ spec:
             frontend:
               replicaCount: 1
             env:
-              - name: PGOPTIONS
-                value: "-c default_transaction_read_only=on"
               - name: AUTO_CREATE_DB
                 value: "0"
               - name: SESSION_COOKIE_SECURE

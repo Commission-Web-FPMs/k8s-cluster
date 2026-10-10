@@ -9,7 +9,6 @@ spec:
   podSelector: {}
   policyTypes:
   - Ingress
-  - Egress
   ingress:
   - from:
     - namespaceSelector:
@@ -23,26 +22,3 @@ spec:
       port: 8000
     - protocol: TCP
       port: 8080
-  egress:
-  - to:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: comweb-db
-      podSelector:
-        matchLabels:
-          cnpg.io/cluster: comweb-db
-    ports:
-    - protocol: TCP
-      port: 5432
-  - to:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: kube-system
-      podSelector:
-        matchLabels:
-          k8s-app: kube-dns
-    ports:
-    - protocol: UDP
-      port: 53
-    - protocol: TCP
-      port: 53
