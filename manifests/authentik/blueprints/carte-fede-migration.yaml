@@ -1,0 +1,47 @@
+version: 1
+metadata:
+  name: Carte Fede - Temporary identity import
+entries:
+  - model: authentik_rbac.role
+    state: present
+    id: migration-role
+    identifiers:
+      name: carte-fede-migration-20261010
+    attrs:
+      permissions:
+        - authentik_core.view_user
+        - authentik_core.view_group
+        - authentik_core.add_user
+  - model: authentik_rbac.initialpermissions
+    state: present
+    identifiers:
+      name: carte-fede-migration-owned-20261010
+    attrs:
+      role: !KeyOf migration-role
+      permissions:
+        - !Find [auth.permission, [codename, view_user], [content_type__app_label, authentik_core]]
+        - !Find [auth.permission, [codename, change_user], [content_type__app_label, authentik_core]]
+        - !Find [auth.permission, [codename, reset_user_password], [content_type__app_label, authentik_core]]
+  - model: authentik_core.user
+    state: present
+    id: migration-account
+    identifiers:
+      username: svc-carte-fede-migration-20261010
+    attrs:
+      name: Carte Fede temporary identity import
+      type: service_account
+      path: service-accounts/carte-fede-migration
+      is_active: true
+      groups: []
+      roles:
+        - !KeyOf migration-role
+      permissions: []
+  - model: authentik_core.token
+    state: present
+    identifiers:
+      identifier: carte-fede-migration-20261010
+    attrs:
+      user: !KeyOf migration-account
+      intent: api
+      expiring: true
+      key: !File /secrets/carte-fede-migration/API_TOKEN

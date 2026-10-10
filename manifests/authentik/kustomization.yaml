@@ -3,6 +3,7 @@ kind: Kustomization
 
 resources:
   - namespace.yaml
+  - migration-api-credentials.sealed.yaml
   - authentik-secret.sealed.yaml
   - authentik-bootstrap.sealed.yaml
   - authentik-db-credentials.sealed.yaml
@@ -14,10 +15,16 @@ resources:
   - provisioning-job.yaml
 
 configMapGenerator:
+  - name: authentik-scrypt-settings
+    namespace: authentik
+    files:
+      - hashers.py=scrypt/hashers.py
+      - user_settings.py=scrypt/user_settings.py
   - name: authentik-blueprints
     namespace: authentik
     files:
       - fede.yaml=blueprints/fede.yaml
+      - carte-fede-migration.yaml=blueprints/carte-fede-migration.yaml
 
 generatorOptions:
   disableNameSuffixHash: true

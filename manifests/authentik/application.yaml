@@ -25,11 +25,60 @@ spec:
           existingSecret:
             secretName: authentik-secret
 
+        server:
+          podAnnotations:
+            carte-fede.fpms.ac.be/scrypt-settings-sha256: "660e1d023fee18b1b3d2964e5c0e7cacce1e5102d606d6c362b7f7936279dcc6"
+          deploymentStrategy:
+            type: RollingUpdate
+            rollingUpdate:
+              maxSurge: 1
+              maxUnavailable: 0
+          resources:
+            requests:
+              cpu: 100m
+              memory: 384Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          volumes:
+            - name: scrypt-settings
+              configMap:
+                name: authentik-scrypt-settings
+          volumeMounts:
+            - name: scrypt-settings
+              mountPath: /data/hashers.py
+              subPath: hashers.py
+              readOnly: true
+            - name: scrypt-settings
+              mountPath: /data/user_settings.py
+              subPath: user_settings.py
+              readOnly: true
+
         worker:
+          podAnnotations:
+            carte-fede.fpms.ac.be/scrypt-settings-sha256: "660e1d023fee18b1b3d2964e5c0e7cacce1e5102d606d6c362b7f7936279dcc6"
+          deploymentStrategy:
+            type: RollingUpdate
+            rollingUpdate:
+              maxSurge: 0
+              maxUnavailable: 1
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 768Mi
           envFrom:
             - secretRef:
                 name: authentik-bootstrap
           volumes:
+            - name: carte-fede-migration-api
+              secret:
+                secretName: carte-fede-migration-api
+            - name: scrypt-settings
+              configMap:
+                name: authentik-scrypt-settings
             - name: carte-fede-credentials
               secret:
                 secretName: carte-fede-credentials
@@ -37,6 +86,17 @@ spec:
               configMap:
                 name: authentik-config
           volumeMounts:
+            - name: carte-fede-migration-api
+              mountPath: /secrets/carte-fede-migration
+              readOnly: true
+            - name: scrypt-settings
+              mountPath: /data/hashers.py
+              subPath: hashers.py
+              readOnly: true
+            - name: scrypt-settings
+              mountPath: /data/user_settings.py
+              subPath: user_settings.py
+              readOnly: true
             - name: carte-fede-credentials
               mountPath: /secrets/carte-fede
               readOnly: true
@@ -49,7 +109,17 @@ spec:
             - authentik-blueprints
 
         global:
+          image:
+            repository: ghcr.io/goauthentik/server
+            tag: 2026.8.2
+            digest: sha256:ff8489a5af4f4fe415ffd180a8e3c10b120bc2592d13d79dac050d977f7b9ecd
           env:
+            - name: AUTHENTIK_LOG_LEVEL
+              value: warning
+            - name: AUTHENTIK_WEB__WORKERS
+              value: "1"
+            - name: AUTHENTIK_WEB__THREADS
+              value: "2"
             - name: AUTHENTIK_WEB__BASE_URL
               value: https://auth.fede.fpms.ac.be
             - name: AUTHENTIK_POSTGRESQL__HOST
