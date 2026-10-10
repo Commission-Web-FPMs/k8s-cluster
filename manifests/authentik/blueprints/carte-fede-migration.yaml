@@ -6,16 +6,14 @@ entries:
     state: present
     id: migration-role
     identifiers:
-      name: carte-fede-migration-20261010
+      name: carte-fede-migration-creator-20261010
     attrs:
       permissions:
-        - authentik_core.view_user
-        - authentik_core.view_group
         - authentik_core.add_user
   - model: authentik_rbac.initialpermissions
     state: present
     identifiers:
-      name: carte-fede-migration-owned-20261010
+      name: carte-fede-migration-owned-creator-20261010
     attrs:
       role: !KeyOf migration-role
       permissions:

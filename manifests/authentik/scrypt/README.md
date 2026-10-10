@@ -35,7 +35,8 @@ while the worker is replaced; the serving process remains available.
 AUTHENTIK_LOG_LEVEL=warning prevents INFO events from printing identity details;
 private Authentik audit events are retained in its database.
 
-The dedicated migration role has global view_user/view_group/add_user only.
+The dedicated migration role has global add_user only. Existing audit credentials are used strictly for GETs;
+no permission of the existing application identity is broadened.
 InitialPermissions grants view/change/reset_password on objects it creates;
 no global password reset, delete, RBAC assignment, superuser or administrative
 UI permission. Its API token expires after the tenant default (currently 1 day)
