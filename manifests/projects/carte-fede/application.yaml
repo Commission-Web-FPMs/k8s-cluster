@@ -67,7 +67,7 @@ spec:
               - name: PROXY_FIX_X_PREFIX
                 value: "0"
               - name: FRONTEND_BASE_URL
-                value: "https://carte-fede-main.web.magellan.fpms.ac.be"
+                value: "https://carte.fede.fpms.ac.be"
               - name: GUNICORN_CMD_ARGS
                 value: "--access-logformat='%(m)s %(s)s %(L)s'"
             envFrom:
@@ -80,9 +80,20 @@ spec:
               - secretRef:
                   name: authentik-credentials
             {{- end }}
+            {{- if eq .branch "main" }}
+            rateLimit:
+              sourceCriterion:
+                ipStrategy:
+                  depth: 1
+            {{- end }}
             httpRoute:
               {{- if eq .branch "main" }}
-              enabled: false
+              filters:
+                - type: ExtensionRef
+                  extensionRef:
+                    group: traefik.io
+                    kind: Middleware
+                    name: carte-fede-npm-only
               {{- end }}
               hostnames:
                 # Il y a pas encore le hostname *.k8s-dev.magellan.fpms.ac.be
@@ -91,7 +102,11 @@ spec:
                 # - k8s-dev.magellan.fpms.ac.be
                 # ça va rentrer en conflit si plusieurs branches
                 # il faut le path pour différencier (mais l'image le supporte pas encore...)
+                {{- if eq .branch "main" }}
+                - 'carte.fede.fpms.ac.be'
+                {{- else }}
                 - 'carte-fede-{{ .branchNormalized }}.web.magellan.fpms.ac.be'
+                {{- end }}
                 
 
 
