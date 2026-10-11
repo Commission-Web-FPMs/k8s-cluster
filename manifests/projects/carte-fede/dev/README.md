@@ -17,3 +17,7 @@ Publication : push application develop → tests → imagesDEV SHA → update va
 ## Recette effective du11 octobre2026
 
 DEV public HTTPS ouvert après recettes protégée puis publique réussies. Voir [ACCEPTANCE.md](ACCEPTANCE.md) pour les commits, preuves, sauvegardes et rollback. Les quatre comptes sont synthétiques, ATTENTE désactivé ; production conserve Flask. Le template NPM a été étendu au seul hôte32, les24 autres rendus restent identiques. Aucun redémarrage NPM : montage read-only persistant dans Compose et copie déjà active ; conserver ce montage aux recréations futures. Aucun changement de l’image NPM actuelle.
+
+## Accès élargi, décision opérateur du11 octobre2026
+
+La restriction aux seuls testeurs synthétiques est levée : tous les comptes Authentik actifs peuvent accéder à DEV. La politique dédiée exige activation/authentification, aucun ajout aux groupes ou modification des comptes existants. Le scope produit un UUID DEV déterministe lié au UUID Authentik signé ; le backend le recalcule indépendamment et crée uniquement un profil pseudonyme MEMBER au premier login. Aucun nom/email/matricule/carte/rôle de production copié. Les fixtures conservent leurs rôles de recette ; comptes désactivés refusés. La révocation du groupe testeurs ne ferme plus l’accès, la désactivation et la révocation des sessions restent effectives. Production main/Flask/PG et les290 comptes sont préservés.

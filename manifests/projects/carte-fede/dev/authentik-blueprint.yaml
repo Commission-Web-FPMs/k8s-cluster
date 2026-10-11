@@ -13,10 +13,11 @@ entries:
     identifiers: {name: carte-fede-dev-identity}
     attrs:
       scope_name: carte_fede_dev
-      description: Synthetic DEV identity and activation only
+      description: DEV pseudonymous identity for every active account
       expression: |
-        allowed = user.is_active and ak_is_group_member(user, name="carte-fede-dev-testers")
-        return {"carte_fede_uuid": user.attributes.get("carte_fede_dev_uuid", ""), "carte_fede_dev_allowed": bool(allowed)}
+        from uuid import uuid5, NAMESPACE_URL
+        identity = user.attributes.get("carte_fede_dev_uuid", "") if user.path == "users/carte-fede-dev" else str(uuid5(NAMESPACE_URL, "carte-fede-dev/authentik/" + str(user.uuid)))
+        return {"carte_fede_uuid": identity, "carte_fede_dev_allowed": bool(user.is_active)}
   - model: authentik_providers_oauth2.oauth2provider
     state: present
     id: dev-provider
@@ -47,8 +48,16 @@ entries:
       provider: !KeyOf dev-provider
       meta_launch_url: https://carte-dev.fede.fpms.ac.be
       policy_engine_mode: all
+  - model: authentik_policies_expression.expressionpolicy
+    state: present
+    id: dev-active-policy
+    identifiers: {name: carte-fede-dev-active-accounts}
+    attrs:
+      expression: return request.user.is_authenticated and request.user.is_active
   - model: authentik_policies.policybinding
     state: present
     identifiers: {target: !KeyOf dev-application, order: 0}
     attrs:
-      group: !KeyOf dev-testers
+      group: null
+      user: null
+      policy: !KeyOf dev-active-policy
