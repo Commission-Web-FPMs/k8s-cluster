@@ -25,3 +25,22 @@ with transaction.atomic():
         u.groups.add(group)
         assert u.is_active==(label!='attente'), 'Synthetic activation drift'
 print('DEV OIDC provisioned; four synthetic identities only; no production changes')
+
+registration=Path('/blueprints/dev/enrollment-blueprint.yaml')
+if registration.exists():
+    importer=Importer.from_string(registration.read_text())
+    valid,logs=importer.validate()
+    assert valid, 'DEV enrollment invalid; details withheld'
+    assert importer.apply(), 'DEV enrollment import failed; details withheld'
+    from authentik.stages.user_write.models import UserWriteStage
+    stage=UserWriteStage.objects.get(name='carte-fede-dev-enrollment-write')
+    assert stage.create_users_group and stage.create_users_group.name=='default'
+    for group_name in ['default','membres']:
+        group=Group.objects.get(name=group_name)
+        assert not group.is_superuser and not group.roles.exists() and not group.parents.exists(), 'Unexpected access inheritance; stop'
+    from authentik.rbac.models import Role
+    service=User.objects.get(username='carte-fede-dev-identity-service')
+    assert not service.is_superuser and not service.groups.exists()
+    role=Role.objects.get(name='carte-fede-dev-owned-identities')
+    assert not service.has_perm('authentik_core.change_user') and not service.has_perm('authentik_core.add_user') and not service.has_perm('authentik_rbac.change_role'), 'No global permissions allowed'
+    print('SAFE_DEV_ENROLLMENT_PROVISIONED dedicated_flow_object_scoped_API_no_global_permission')

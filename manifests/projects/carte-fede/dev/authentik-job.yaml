@@ -55,6 +55,9 @@ spec:
         - name: scrypt-settings
           mountPath: /data
           readOnly: true
+        - name: registration-credentials
+          mountPath: /secrets/registration
+          readOnly: true
       volumes:
       - name: dev-blueprint
         configMap:
@@ -65,3 +68,6 @@ spec:
       - name: scrypt-settings
         configMap:
           name: authentik-scrypt-settings
+      - name: registration-credentials
+        secret:
+          secretName: carte-fede-dev-identity-api

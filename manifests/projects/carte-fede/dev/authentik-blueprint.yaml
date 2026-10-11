@@ -15,7 +15,7 @@ entries:
       scope_name: carte_fede_dev
       description: Identity only; business binding and roles verified by Carte Fede
       expression: |
-        identity = user.attributes.get("carte_fede_uuid", "") or user.attributes.get("carte_fede_dev_uuid", "")
+        identity = user.attributes.get("carte_fede_uuid", "") or user.attributes.get("carte_fede_dev_uuid", "") or user.attributes.get("carte_fede_dev_business_uuid", "")
         return {"carte_fede_uuid": identity, "carte_fede_dev_allowed": bool(user.is_active)}
   - model: authentik_providers_oauth2.oauth2provider
     state: present

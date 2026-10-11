@@ -23,6 +23,17 @@ spec:
       protocol: TCP
     - port: 8080
       protocol: TCP
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: authentik
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: authentik
+          app.kubernetes.io/component: server
+    ports:
+    - port: 8000
+      protocol: TCP
   egress:
   - to:
     - namespaceSelector:
