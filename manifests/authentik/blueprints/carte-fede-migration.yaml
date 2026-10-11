@@ -29,17 +29,11 @@ entries:
       name: Carte Fede temporary identity import
       type: service_account
       path: service-accounts/carte-fede-migration
-      is_active: true
+      is_active: false
       groups: []
-      roles:
-        - !KeyOf migration-role
+      roles: []
       permissions: []
   - model: authentik_core.token
-    state: present
+    state: absent
     identifiers:
       identifier: carte-fede-migration-20261010
-    attrs:
-      user: !KeyOf migration-account
-      intent: api
-      expiring: true
-      key: !File /secrets/carte-fede-migration/API_TOKEN

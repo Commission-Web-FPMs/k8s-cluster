@@ -62,3 +62,22 @@ never overwrite an Authentik-native password change without resolving the confli
 Business ADMIN/VERIFIER/MEMBER roles and cards remain exclusively in PostgreSQL.
 
 Worker probe validation, 11 October 2026: real isolated `ak healthcheck` probes, timeout 10 seconds / period 30 seconds, failure threshold 3 unchanged. Server retains HTTP health probes. Eight native login flows (four concurrent) passed, no OOM or new restart; server cgroup peak about 960 MiB under a 1 GiB limit. This is bounded validation, not capacity approval for opening OIDC to all members. Cold isolated startup took several minutes; startup probe retains 60 attempts.
+
+Migration campaign verified, 11 October 2026: 290 identities, including 286 active
+`membres` and four DISABLED pending registrations in `default`. Source UUIDs and
+converted verifiers match, existing identities and Carte Fede business rows are
+unchanged. More than 30 minutes of continuous infrastructure observation and
+bounded synthetic login/OIDC tests passed before import. The migration blueprint
+now keeps the dedicated service identity inactive with no roles and removes its
+API token. The encrypted SealedSecret is retained; its old key must be rejected.
+Existing application credentials, roles and providers are unchanged.
+
+The encrypted ownership journal remains outside Git. After revocation, targeted
+rollback requires a separately authorized, tested minimal identity restricted to
+those owned objects; do not reuse the application credential or restore all of
+Authentik. Flask authentication remains active. Before OIDC, reconcile identity
+and password deltas, establish an authoritative issuer/sub-to-source-UUID mapping
+resistant to attribute edits, verify pending approval mappings and test capacity.
+The latest bounded test used two concurrent clients (eight logins, maximum
+4.372 s, server peak about 710 MiB); the previous four-client 960 MiB peak leaves
+little headroom under 1 GiB and does not approve opening OIDC to every member.
