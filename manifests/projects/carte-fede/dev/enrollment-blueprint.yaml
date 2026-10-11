@@ -63,7 +63,7 @@ entries:
         if not Flow.objects.filter(pk=plan.flow_pk,slug='carte-fede-dev-enrollment').exists() or (request.http_request and request.http_request.user.is_authenticated):
             ak_message('Utilisez la connexion existante pour une identité déjà active.');return False
         prompt=request.context.get('prompt_data',{})
-        allowed={'username','password','password_repeat','nom','prenom','member_id','business_email','free_card_requested','component'}
+        allowed={'username','password','password_repeat','nom','prenom','member_id','business_email','free_card_requested','component','existing_account'}
         if not set(prompt)<=allowed or not 12<=len(prompt.get('password',''))<=128:
             ak_message('Champs invalides ou mot de passe trop court (12 caractères).');return False
         business={k:prompt.get(k,'') for k in ['nom','prenom','member_id']}
@@ -110,7 +110,24 @@ entries:
                 ak_message('Identité créée inactive ; transmission à reprendre, aucun accès accordé.');return False
         except requests.RequestException:
             ak_message('Identité inactive conservée ; transmission à reprendre.');return False
+        from urllib.parse import urlsplit,parse_qs
+        target=response.json().get('confirmation_url','')
+        parsed=urlsplit(target)
+        if parsed.scheme!='https' or parsed.netloc!='carte-dev.fede.fpms.ac.be' or parsed.path!='/api/dev/enrollment-confirm' or set(parse_qs(parsed.query))!={'state'}:
+            return False
+        plan.context['redirect_stage_target']=target
         return True
+  - model: authentik_stages_prompt.prompt
+    id: existing-account-link
+    state: present
+    identifiers: {name: carte-fede-dev-existing-account-link}
+    attrs:
+      field_key: existing_account
+      label: "Compte existant"
+      type: static
+      required: false
+      placeholder: '<a href="https://auth.fede.fpms.ac.be/if/flow/carte-fede-dev-existing-registration/">J’ai déjà un compte Authentik : demander uniquement mon profil Carte Fédé DEV</a>'
+      order: 0
   - model: authentik_stages_prompt.prompt
     id: prompt-username
     state: present
@@ -120,7 +137,7 @@ entries:
       label: "Identifiant Authentik distinct du matricule métier"
       type: username
       required: true
-      order: 0
+      order: 1
   - model: authentik_stages_prompt.prompt
     id: prompt-password
     state: present
@@ -130,7 +147,7 @@ entries:
       label: "Mot de passe Authentik (12 caractères minimum)"
       type: password
       required: true
-      order: 1
+      order: 2
   - model: authentik_stages_prompt.prompt
     id: prompt-password_repeat
     state: present
@@ -140,7 +157,7 @@ entries:
       label: "Confirmation"
       type: password
       required: true
-      order: 2
+      order: 3
   - model: authentik_stages_prompt.prompt
     id: prompt-nom
     state: present
@@ -150,7 +167,7 @@ entries:
       label: "Nom"
       type: text
       required: true
-      order: 3
+      order: 4
   - model: authentik_stages_prompt.prompt
     id: prompt-prenom
     state: present
@@ -160,7 +177,7 @@ entries:
       label: "Prénom"
       type: text
       required: true
-      order: 4
+      order: 5
   - model: authentik_stages_prompt.prompt
     id: prompt-member_id
     state: present
@@ -170,7 +187,7 @@ entries:
       label: "Matricule métier (6 chiffres), OU email ci-dessous"
       type: text
       required: false
-      order: 5
+      order: 6
   - model: authentik_stages_prompt.prompt
     id: prompt-business_email
     state: present
@@ -180,7 +197,7 @@ entries:
       label: "Email métier si aucun matricule"
       type: email
       required: false
-      order: 6
+      order: 7
   - model: authentik_stages_prompt.prompt
     id: prompt-free_card_requested
     state: present
@@ -190,13 +207,13 @@ entries:
       label: "Demande de carte gratuite"
       type: checkbox
       required: false
-      order: 7
+      order: 8
   - model: authentik_stages_prompt.promptstage
     id: enrollment-prompt
     state: present
     identifiers: {name: carte-fede-dev-enrollment-prompt}
     attrs:
-      fields: [!KeyOf prompt-username, !KeyOf prompt-password, !KeyOf prompt-password_repeat, !KeyOf prompt-nom, !KeyOf prompt-prenom, !KeyOf prompt-member_id, !KeyOf prompt-business_email, !KeyOf prompt-free_card_requested]
+      fields: [!KeyOf existing-account-link, !KeyOf prompt-username, !KeyOf prompt-password, !KeyOf prompt-password_repeat, !KeyOf prompt-nom, !KeyOf prompt-prenom, !KeyOf prompt-member_id, !KeyOf prompt-business_email, !KeyOf prompt-free_card_requested]
       validation_policies: [!KeyOf validate-policy]
   - model: authentik_stages_user_write.userwritestage
     id: enrollment-write
@@ -232,3 +249,130 @@ entries:
     state: present
     identifiers: {target: !KeyOf done-binding, order: 0}
     attrs: {policy: !KeyOf complete-policy}
+
+  - model: authentik_flows.flow
+    id: registration-entry
+    state: present
+    identifiers: {slug: carte-fede-dev-register}
+    attrs:
+      name: Carte Fede DEV registration entry
+      title: Inscription Carte Fede DEV
+      designation: enrollment
+      authentication: none
+  - model: authentik_stages_redirect.redirectstage
+    id: registration-choice
+    state: present
+    identifiers: {name: carte-fede-dev-registration-choice}
+    attrs: {mode: static, target_static: 'ak-flow://carte-fede-dev-enrollment'}
+  - model: authentik_policies_expression.expressionpolicy
+    id: registration-choice-policy
+    state: present
+    identifiers: {name: carte-fede-dev-registration-choice}
+    attrs:
+      expression: |
+        plan=request.context['flow_plan']
+        user=request.http_request.user
+        plan.context['redirect_stage_target']='ak-flow://carte-fede-dev-existing-registration' if user.is_authenticated and user.is_active else 'ak-flow://carte-fede-dev-enrollment'
+        return True
+  - model: authentik_flows.flowstagebinding
+    id: registration-choice-binding
+    state: present
+    identifiers: {target: !KeyOf registration-entry, order: 10}
+    attrs: {stage: !KeyOf registration-choice, evaluate_on_plan: false, evaluate_when_stage: true}
+  - model: authentik_policies.policybinding
+    state: present
+    identifiers: {target: !KeyOf registration-choice-binding, order: 0}
+    attrs: {policy: !KeyOf registration-choice-policy}
+  - model: authentik_flows.flow
+    id: existing-registration
+    state: present
+    identifiers: {slug: carte-fede-dev-existing-registration}
+    attrs:
+      name: Carte Fede DEV existing identity registration
+      title: Demande de profil Carte Fede DEV
+      designation: enrollment
+      authentication: require_authenticated
+  - model: authentik_policies_expression.expressionpolicy
+    id: existing-validation
+    state: present
+    identifiers: {name: carte-fede-dev-existing-validation}
+    attrs:
+      expression: |
+        import hashlib,hmac,json,time,uuid,re
+        import requests
+        from authentik.flows.models import Flow
+        from authentik.core.models import Token,User
+        # Prompt validation policies receive prompt_data, but no flow_plan in 2026.8.
+        # Read the server-side executor session; never accept a client flow identifier.
+        plan=request.context.get('flow_plan') or request.http_request.session.get('authentik/flows/plan')
+        if not plan:
+            return False
+        if not Flow.objects.filter(pk=plan.flow_pk,slug='carte-fede-dev-existing-registration').exists() or (not request.http_request or not request.http_request.user.is_authenticated or not request.http_request.user.is_active):
+            ak_message('Utilisez la connexion existante pour une identité déjà active.');return False
+        prompt=request.context.get('prompt_data',{})
+        allowed={'nom','prenom','member_id','business_email','free_card_requested','component'}
+        if not set(prompt)<=allowed:
+            ak_message('Champs invalides ou mot de passe trop court (12 caractères).');return False
+        business={k:prompt.get(k,'') for k in ['nom','prenom','member_id']}
+        business['email']=prompt.get('business_email','');business['free_card_requested']=bool(prompt.get('free_card_requested',False))
+        key=Token.objects.get(identifier='carte-fede-dev-enrollment-hook').key
+        stamp=str(int(time.time()));body=json.dumps({'operation':'check','business':business},sort_keys=True).encode()
+        sign=hmac.new(key.encode(),stamp.encode()+b'.'+body,hashlib.sha256).hexdigest()
+        try:
+            response=requests.post('http://carte-fede-dev.carte-fede-dev.svc.cluster.local:8000/api/dev/enrollment-hook',data=body,headers={'Content-Type':'application/json','X-Enrollment-Time':stamp,'X-Enrollment-Signature':sign},timeout=8,allow_redirects=False)
+            if response.status_code!=200:
+                ak_message('Informations invalides ou inscription déjà en attente.');return False
+        except requests.RequestException:
+            ak_message('Inscription temporairement indisponible.');return False
+        plan.context['carte_fede_dev_business']=business
+        return True
+  - model: authentik_policies_expression.expressionpolicy
+    id: existing-completion
+    state: present
+    identifiers: {name: carte-fede-dev-existing-completion}
+    attrs:
+      expression: |
+        import hashlib,hmac,json,time
+        import requests
+        from authentik.flows.models import Flow
+        from authentik.core.models import Token,Group
+        from authentik.rbac.models import Role
+        plan=request.context['flow_plan'];user=request.http_request.user
+        if not Flow.objects.filter(pk=plan.flow_pk,slug='carte-fede-dev-existing-registration').exists() or not user.is_authenticated or not user.is_active or user.type!='internal':
+            return False
+        key=Token.objects.get(identifier='carte-fede-dev-enrollment-hook').key
+        stamp=str(int(time.time()));body=json.dumps({'operation':'existing','active_attestation':True,'subject':str(user.uuid),'auth_user_pk':user.pk,'business':plan.context['carte_fede_dev_business']},sort_keys=True).encode()
+        sign=hmac.new(key.encode(),stamp.encode()+b'.'+body,hashlib.sha256).hexdigest()
+        try:
+            response=requests.post('http://carte-fede-dev.carte-fede-dev.svc.cluster.local:8000/api/dev/enrollment-hook',data=body,headers={'Content-Type':'application/json','X-Enrollment-Time':stamp,'X-Enrollment-Signature':sign},timeout=8,allow_redirects=False)
+            if response.status_code not in [200,202]:
+                ak_message('Demande non transmise ; réessayez, identité existante inchangée.');return False
+        except requests.RequestException:
+            ak_message('Demande indisponible ; identité existante inchangée.');return False
+        from urllib.parse import urlsplit,parse_qs
+        target=response.json().get('confirmation_url','')
+        parsed=urlsplit(target)
+        if parsed.scheme!='https' or parsed.netloc!='carte-dev.fede.fpms.ac.be' or parsed.path!='/api/dev/enrollment-confirm' or set(parse_qs(parsed.query))!={'state'}:
+            return False
+        plan.context['redirect_stage_target']=target
+        return True
+  - model: authentik_stages_prompt.promptstage
+    id: existing-prompt
+    state: present
+    identifiers: {name: carte-fede-dev-existing-registration-prompt}
+    attrs:
+      fields: [!KeyOf prompt-nom, !KeyOf prompt-prenom, !KeyOf prompt-member_id, !KeyOf prompt-business_email, !KeyOf prompt-free_card_requested]
+      validation_policies: [!KeyOf existing-validation]
+  - model: authentik_flows.flowstagebinding
+    state: present
+    identifiers: {target: !KeyOf existing-registration, order: 10}
+    attrs: {stage: !KeyOf existing-prompt, evaluate_on_plan: false}
+  - model: authentik_flows.flowstagebinding
+    id: existing-done-binding
+    state: present
+    identifiers: {target: !KeyOf existing-registration, order: 20}
+    attrs: {stage: !KeyOf enrollment-done, evaluate_on_plan: false, evaluate_when_stage: true}
+  - model: authentik_policies.policybinding
+    state: present
+    identifiers: {target: !KeyOf existing-done-binding, order: 0}
+    attrs: {policy: !KeyOf existing-completion}

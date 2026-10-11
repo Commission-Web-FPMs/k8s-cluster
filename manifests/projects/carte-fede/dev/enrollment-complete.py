@@ -19,4 +19,10 @@ try:
         ak_message('Identité créée inactive ; transmission à reprendre, aucun accès accordé.');return False
 except requests.RequestException:
     ak_message('Identité inactive conservée ; transmission à reprendre.');return False
+from urllib.parse import urlsplit,parse_qs
+target=response.json().get('confirmation_url','')
+parsed=urlsplit(target)
+if parsed.scheme!='https' or parsed.netloc!='carte-dev.fede.fpms.ac.be' or parsed.path!='/api/dev/enrollment-confirm' or set(parse_qs(parsed.query))!={'state'}:
+    return False
+plan.context['redirect_stage_target']=target
 return True

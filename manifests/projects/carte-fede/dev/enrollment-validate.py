@@ -10,7 +10,7 @@ if not plan:
 if not Flow.objects.filter(pk=plan.flow_pk,slug='carte-fede-dev-enrollment').exists() or (request.http_request and request.http_request.user.is_authenticated):
     ak_message('Utilisez la connexion existante pour une identité déjà active.');return False
 prompt=request.context.get('prompt_data',{})
-allowed={'username','password','password_repeat','nom','prenom','member_id','business_email','free_card_requested','component'}
+allowed={'username','password','password_repeat','nom','prenom','member_id','business_email','free_card_requested','component','existing_account'}
 if not set(prompt)<=allowed or not 12<=len(prompt.get('password',''))<=128:
     ak_message('Champs invalides ou mot de passe trop court (12 caractères).');return False
 business={k:prompt.get(k,'') for k in ['nom','prenom','member_id']}

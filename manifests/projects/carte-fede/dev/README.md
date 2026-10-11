@@ -43,3 +43,11 @@ Recette synthétique : tests PostgreSQL 18 des deux QR, GET/PUT/PATCH administra
 Les noms et erreurs affichés lors de la vérification des cartes sont échappés avant insertion HTML. Les écrans QR et les réponses de vérification DEV portent TEST DEV ; les tokens expirent après 400 jours et conservent la période de la carte. Les signatures DEV sont refusées avec la clé et le salt de production.
 
 Recette HTTPS du 11 octobre 2026 réussie : GET/PUT/PATCH ADMIN et refus MEMBER/VERIFIER, QR EPC TEST, carte historique synthétique, création native inactive, approbation idempotente, première connexion et carte, identité active existante sans modification globale, rejet conservant l’identité inactive, refus des signatures expirées/altérées/hors environnement. Toutes les lignes et définitions des neuf tables copiées restent inchangées ; les seuls ajouts sont le journal, la configuration de démonstration et les données synthétiques de recette. Les quatre demandes historiques demeurent intactes et désactivées.
+
+### Native DEV registration completion
+
+The isolated `carte-fede-dev-register` entry flow routes anonymous users to inactive native enrollment and already authenticated identities to a business-only native prompt. Existing identities are not recreated, activated, deactivated or assigned groups by that prompt or local approval. The HMAC hook attests the immutable UUID; collision checks never infer identity from email/matricule.
+
+The final native redirect uses the backend-issued signed confirmation URL. Its opaque nonce expires after five minutes and is consumed exactly once in the DEV confirmation journal. It returns to the homepage without an authorized business session. Both native flows contain no login, mail or notification stage. The four historical pending identities remain inactive and require separate operator activation.
+
+Deploy only after the additive `dev_enrollment_confirmation` table and the compatible develop image are verified. During this coordinated rollout, hold only DEV replicas at zero through chart develop; do not modify NPM. Restore DEV replicas only after the blueprint provision hook succeeds and then validate native HTTPS registration, approval and card requests with owned synthetic accounts. Production OIDC remains disabled.
