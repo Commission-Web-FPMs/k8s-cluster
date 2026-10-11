@@ -70,3 +70,14 @@ Protection supplémentaire : developf976611b79bf5772177627dd5903f4784a37dee4 vé
 La création automatique de profils MEMBER est abandonnée. Copie PROD → DEV explicitement autorisée et réalisée, toutes les lignes identiques au snapshot chiffré :286 utilisateurs,366 cartes,4 inscriptions en attente,9 tables. Rôles7 ADMIN/9 VERIFIER/270 MEMBER,230466 ADMIN. Les286 bindings proviennent du journal d'import vérifié contre UUID/attributs/run et comptes Authentik existants ; aucune modification de ces comptes. Les quatre inscriptions non approuvées restent default et désactivées.
 
 Backend ef56604e : aucun auto-provisionnement, rôles PostgreSQL rechargés chaque requête, administration ADMIN, vérification ADMIN/VERIFIER. Recette intégrée complète sur fixtures avant copie : permissions des trois rôles, claims admin/superuser forgés sans effet, promotion/rétrogradation en cours de session, mise en attente401, auto-élévation MEMBER403. Seize tests unitaires avec le verrou de réinitialisation avant SQL. DEV fermé et0/0 pendant la copie et la publication du mapping ; PreSync synthétique désactivé. Cette section remplace les anciens critères de MEMBER automatique et données synthétiques uniquement.
+
+
+### Recette finale de la copie réelle
+
+Application e51f07c881848824fcd2b7be3fcc470ef009db8e, CI38149042984 réussie ; chart6726542, initialisation désactivée et DEV1/1. Les286 évaluations natives du scope correspondent aux associations vérifiées, sans privilège Authentik ; quatre comptes en attente désactivés. Secret réconcilié : seul OIDC_IDENTITY_BINDINGS changé, autres credentials identiques.
+
+Test backend sur données copiées sans écriture :230466 ADMIN, VERIFIER/MEMBER, administration et vérification positives/négatives, paiements403, claims admin/superusers sans effet. Un premier test utilisait une carte inexistante et attendait200 au lieu du404 métier ; corrigé en utilisant une carte copiée existante, recette réussie. Aucun changement de données ; toutes les lignes et le schéma ont été comparés à nouveau après recette.
+
+Test TLS/OIDC réel avec ancien compte synthétique actif : callback401 car sans association, données/admin401, aucun profil créé ; compte d'attente désactivé refusé. Aucun mot de passe utilisateur réel utilisé. La recette des trois rôles en conditions HTTP backend utilise userinfo simulé ; l'association des286 comptes est vérifiée nativement, mais une connexion manuelle réelle de230466 reste une recette opérateur possible.
+
+NPM : confidentialité et headers testés,46 sondes HTTP/TLS des23 hôtes existants conformes. Ouverture uniquement DEV, certificat valide, ForceSSL, APIs métier anonymes401. Argo13 applications Synced/Healthy, CloudNativePG3/3, DEV et main1/1. Production reste Flask, aucun rôle synchronisé à Authentik. Archives chiffrées préalables et snapshot conservés ; rollback DEV décrit dans README et runbook local PRODUCTION.md. Aucun laboratoire ou sauvegarde supprimé.
