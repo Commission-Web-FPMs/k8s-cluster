@@ -21,6 +21,7 @@ spec:
           # Le SCM generator travaille au niveau de l'organisation,
           # donc on restreint au repo voulu.
           - repositoryMatch: '^carte-fede-deployment$'
+            branchMatch: '^main$'
 
         requeueAfterSeconds: 60
         
