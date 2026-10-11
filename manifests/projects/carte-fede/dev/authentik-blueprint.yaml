@@ -13,10 +13,9 @@ entries:
     identifiers: {name: carte-fede-dev-identity}
     attrs:
       scope_name: carte_fede_dev
-      description: DEV pseudonymous identity for every active account
+      description: Identity only; business binding and roles verified by Carte Fede
       expression: |
-        from uuid import uuid5, NAMESPACE_URL
-        identity = user.attributes.get("carte_fede_dev_uuid", "") if user.path == "users/carte-fede-dev" else str(uuid5(NAMESPACE_URL, "carte-fede-dev/authentik/" + str(user.uuid)))
+        identity = user.attributes.get("carte_fede_uuid", "") or user.attributes.get("carte_fede_dev_uuid", "")
         return {"carte_fede_uuid": identity, "carte_fede_dev_allowed": bool(user.is_active)}
   - model: authentik_providers_oauth2.oauth2provider
     state: present
