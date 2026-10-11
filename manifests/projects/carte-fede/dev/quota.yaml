@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: carte-fede-dev-budget
+  namespace: carte-fede-dev
+spec:
+  hard:
+    requests.cpu: 500m
+    requests.memory: 512Mi
+    limits.cpu: '2'
+    limits.memory: 1Gi
+    pods: '8'
+    services: '8'
+    configmaps: '10'
+    secrets: '10'
+    persistentvolumeclaims: '0'

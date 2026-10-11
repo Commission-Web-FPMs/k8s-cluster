@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: carte-fede-dev
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: '5'
+spec:
+  project: carte-fede-dev
+  source:
+    repoURL: https://github.com/Commission-Web-FPMs/carte-fede-deployment.git
+    targetRevision: develop
+    path: .
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: carte-fede-dev
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

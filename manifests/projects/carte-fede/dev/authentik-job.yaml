@@ -1,0 +1,67 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: carte-fede-dev-authentik-provision
+  namespace: authentik
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+spec:
+  backoffLimit: 1
+  activeDeadlineSeconds: 240
+  template:
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      containers:
+      - name: provision
+        image: ghcr.io/goauthentik/server:2026.8.2@sha256:ff8489a5af4f4fe415ffd180a8e3c10b120bc2592d13d79dac050d977f7b9ecd
+        command:
+        - ak
+        - shell
+        - -c
+        args:
+        - exec(open('/blueprints/dev/provision.py').read())
+        envFrom:
+        - secretRef:
+            name: authentik-secret
+        env:
+        - name: AUTHENTIK_POSTGRESQL__HOST
+          value: comweb-db-rw.comweb-db.svc.cluster.local
+        - name: AUTHENTIK_POSTGRESQL__PORT
+          value: '5432'
+        - name: AUTHENTIK_POSTGRESQL__NAME
+          value: authentik
+        - name: AUTHENTIK_POSTGRESQL__USER
+          value: authentik
+        - name: AUTHENTIK_POSTGRESQL__SSLMODE
+          value: require
+        - name: AUTHENTIK_LOG_LEVEL
+          value: warning
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 384Mi
+        volumeMounts:
+        - name: dev-blueprint
+          mountPath: /blueprints/dev
+          readOnly: true
+        - name: dev-credentials
+          mountPath: /secrets/dev
+          readOnly: true
+        - name: scrypt-settings
+          mountPath: /data
+          readOnly: true
+      volumes:
+      - name: dev-blueprint
+        configMap:
+          name: carte-fede-dev-authentik-blueprint
+      - name: dev-credentials
+        secret:
+          secretName: carte-fede-dev-provisioning-credentials
+      - name: scrypt-settings
+        configMap:
+          name: authentik-scrypt-settings

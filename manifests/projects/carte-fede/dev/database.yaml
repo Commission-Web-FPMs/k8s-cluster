@@ -1,0 +1,40 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: DatabaseRole
+metadata:
+  name: carte-fede-dev
+  namespace: comweb-db
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false,SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: '1'
+spec:
+  cluster:
+    name: comweb-db
+  name: carte_fede_dev
+  login: true
+  superuser: false
+  createdb: false
+  createrole: false
+  replication: false
+  bypassrls: false
+  databaseRoleReclaimPolicy: retain
+  passwordSecret:
+    name: carte-fede-dev-db-credentials
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: carte-fede-dev
+  namespace: comweb-db
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false,SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: '2'
+spec:
+  cluster:
+    name: comweb-db
+  name: carte_fede_dev
+  owner: carte_fede_dev
+  template: template0
+  encoding: UTF8
+  localeProvider: icu
+  icuLocale: en-US
+  databaseReclaimPolicy: retain

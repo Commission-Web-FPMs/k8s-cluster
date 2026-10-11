@@ -1,0 +1,34 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: carte-fede-dev
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: '0'
+spec:
+  description: Only Carte Fede develop chart into isolated DEV namespace
+  sourceRepos:
+  - https://github.com/Commission-Web-FPMs/carte-fede-deployment.git
+  destinations:
+  - server: https://kubernetes.default.svc
+    namespace: carte-fede-dev
+  clusterResourceWhitelist: []
+  namespaceResourceWhitelist:
+  - group: ''
+    kind: Service
+  - group: ''
+    kind: ServiceAccount
+  - group: ''
+    kind: ConfigMap
+  - group: ''
+    kind: Secret
+  - group: apps
+    kind: Deployment
+  - group: batch
+    kind: Job
+  - group: gateway.networking.k8s.io
+    kind: HTTPRoute
+  - group: traefik.io
+    kind: Middleware
+  - group: networking.k8s.io
+    kind: NetworkPolicy
