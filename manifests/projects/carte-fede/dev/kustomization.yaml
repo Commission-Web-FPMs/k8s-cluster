@@ -11,12 +11,13 @@ resources:
 - networkpolicy.yaml
 - authentik-job.yaml
 - registration.credentials.sealed.yaml
+- smtp.credentials.sealed.yaml
 configMapGenerator:
 - name: carte-fede-dev-authentik-blueprint
   namespace: authentik
   files:
   - blueprint.yaml=authentik-blueprint.yaml
   - provision.py=authentik-provision.py
-  - enrollment-blueprint.yaml=enrollment-blueprint.yaml
+  - enrollment-blueprint.yaml=email-enrollment-blueprint.yaml
 generatorOptions:
   disableNameSuffixHash: true

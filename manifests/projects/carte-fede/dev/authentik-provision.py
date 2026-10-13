@@ -32,9 +32,14 @@ if registration.exists():
     valid,logs=importer.validate()
     assert valid, 'DEV enrollment invalid; details withheld'
     assert importer.apply(), 'DEV enrollment import failed; details withheld'
-    from authentik.stages.user_write.models import UserWriteStage
-    stage=UserWriteStage.objects.get(name='carte-fede-dev-enrollment-write')
-    assert stage.create_users_group and stage.create_users_group.name=='default'
+    from authentik.stages.email.models import EmailStage
+    from authentik.stages.prompt.models import PromptStage
+    stage=EmailStage.objects.get(name='carte-fede-dev-email-verification')
+    assert not stage.use_global_settings and not stage.activate_user_on_success
+    assert stage.host=='smtp.gmail.com' and stage.port==587 and stage.use_tls and not stage.use_ssl
+    assert stage.username and stage.password and stage.from_address==stage.username
+    prompt=PromptStage.objects.get(name='carte-fede-dev-email-enrollment-prompt')
+    assert set(prompt.fields.exclude(type='static').values_list('field_key',flat=True))=={'nom','prenom','identifier'}
     for group_name in ['default','membres']:
         group=Group.objects.get(name=group_name)
         assert not group.is_superuser and not group.roles.exists() and not group.parents.exists(), 'Unexpected access inheritance; stop'

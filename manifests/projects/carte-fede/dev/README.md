@@ -1,3 +1,25 @@
+# Inscription automatique DEV — 13 octobre 2026
+
+Le parcours natif collecte nom, prénom et matricule/e-mail. L’activation et le
+profil MEMBER sont automatiques après preuve e-mail et mot de passe natifs.
+Les cartes et demandes restent séparées et exigent une décision ADMIN. Les
+quatre dossiers historiques ne sont pas promus sans preuve distincte.
+
+Le stage e-mail DEV utilise le SMTP commun existant Carte Fédé sur
+`smtp.gmail.com:587` avec STARTTLS. Les credentials sont dans le SealedSecret
+`carte-fede-dev-smtp-credentials` du namespace authentik, copié en mémoire
+depuis le Secret existant de production. Le Secret source, le SMTP global
+Authentik, les autres applications et les politiques réseau restent inchangés.
+Seul le Job de provisionnement DEV monte ce Secret ; aucun backend ne reçoit
+de nouveau credential SMTP. Les tests d’inscription sont exécutés dans le
+clone avec Mailpit isolé, jamais en envoyant des messages réels.
+
+Le groupe partagé `membres` ouvre aussi l’application SSO carte-fede-main,
+attribution confirmée par l’opérateur. Les rôles métier restent PostgreSQL.
+Déployer backend flag off, flows/Secret, puis flag on dans chart develop.
+Anciennes descriptions d’approbation des comptes ci-dessous : historiques,
+remplacées par ce parcours ; aucune carte à la création du compte.
+
 # Carte Fédé DEV
 
 DEV est public sur https://carte-dev.fede.fpms.ac.be, avec authentification OIDC. La production main conserve Flask. La base/rôle dédiés carte_fede_dev utilisent PostgreSQL18, UTF8 et ICU déterministe en-US. Le frontend public ne donne aucun accès anonyme aux données métier.

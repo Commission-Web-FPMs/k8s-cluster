@@ -58,6 +58,9 @@ spec:
         - name: registration-credentials
           mountPath: /secrets/registration
           readOnly: true
+        - name: dev-smtp-credentials
+          mountPath: /secrets/dev-smtp
+          readOnly: true
       volumes:
       - name: dev-blueprint
         configMap:
@@ -71,3 +74,6 @@ spec:
       - name: registration-credentials
         secret:
           secretName: carte-fede-dev-identity-api
+      - name: dev-smtp-credentials
+        secret:
+          secretName: carte-fede-dev-smtp-credentials
